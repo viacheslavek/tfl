@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab1/stack"
+	"log"
 	"regexp"
 	"strings"
 )
@@ -31,7 +32,25 @@ func InitExpression() *Expression {
 	}
 }
 
+func Parse(input string) error {
+	expr := InitExpression()
+
+	if err := expr.ExtractPair(input); err != nil {
+		return fmt.Errorf(parsePairError, err)
+	}
+
+	if err := expr.ParseExpressionsToLinearRepresentation(); err != nil {
+		return fmt.Errorf(parseRepresentationError, err)
+	}
+
+	panic("я еще не готова.")
+
+	return nil
+}
+
 func (e *Expression) ExtractPair(input string) error {
+
+	log.Printf("start parsing\n")
 
 	inputPairs := strings.Split(input, "\n")
 
@@ -49,10 +68,39 @@ func (e *Expression) ExtractPair(input string) error {
 		}
 	}
 
+	log.Printf("after spliting into pairs:\n%s", e.ToStringLinearExpression())
+
 	return nil
 }
 
-func (e *Expression) ParseExpressionsToLinearRepresentation() ([]ExpressionPair, error) {
+func (e *Expression) ToStringLinearExpression() string {
+	linear := ""
+	for i, expr := range e.EPs {
+		linear += fmt.Sprintf("%d:\nleft: %s\nright: %s\n", i, expr.Left, expr.Right)
+	}
+	linear += "\n"
+	return linear
+}
+
+func (e *Expression) ToStringConstructions() string {
+	constr := ""
+	for name, constant := range e.NameConstructorToConstant {
+		constr += fmt.Sprintf("name: %s, constants: %+v\n", name, constant)
+	}
+	constr += "\n"
+	return constr
+}
+
+func (e *Expression) ToStringVariables() string {
+	variables := ""
+	for v := range e.Variables {
+		variables += fmt.Sprintf(", %s", v)
+	}
+	variables += "\n"
+	return variables[2:]
+}
+
+func (e *Expression) ParseExpressionsToLinearRepresentation() error {
 
 	linearPair := make([]ExpressionPair, len(e.EPs))
 	for i, p := range e.EPs {
@@ -60,11 +108,18 @@ func (e *Expression) ParseExpressionsToLinearRepresentation() ([]ExpressionPair,
 		linearPair[i].Left, err = e.parseOneFunctionToLinearRepresentation(p.Left)
 		linearPair[i].Right, err = e.parseOneFunctionToLinearRepresentation(p.Right)
 		if err != nil {
-			return make([]ExpressionPair, 0), fmt.Errorf(parseError, err)
+			return fmt.Errorf(parseError, err)
 		}
 	}
 
-	return linearPair, nil
+	e.EPs = linearPair
+
+	log.Printf("after parsing into linear expression\n")
+	log.Printf("linear expression: \n%s", e.ToStringLinearExpression())
+	log.Printf("constructor and constants:\n%s", e.ToStringConstructions())
+	log.Printf("variables:\n%s", e.ToStringVariables())
+
+	return nil
 }
 
 func (e *Expression) parseOneFunctionToLinearRepresentation(expr string) (string, error) {
@@ -94,7 +149,7 @@ func (e *Expression) parseOneFunctionToLinearRepresentation(expr string) (string
 	}
 
 	if stackExpr.Size() != 1 {
-		return "", fmt.Errorf("stack must contain one element, it contain %d", stackExpr.Size())
+		return "", fmt.Errorf(stackSizeError, stackExpr.Size())
 	}
 
 	return stackExpr.Pop()
@@ -103,7 +158,7 @@ func (e *Expression) parseOneFunctionToLinearRepresentation(expr string) (string
 func (e *Expression) openBracketCase(s *stack.Stack[string], p string) error {
 	_, err := s.Back()
 	if err != nil {
-		return fmt.Errorf("in case '(' with element %s error %+v\n", p, err)
+		return fmt.Errorf(openBracketError, p, err)
 	}
 	s.Push(p)
 
@@ -117,17 +172,17 @@ func (e *Expression) closeBracketCase(s *stack.Stack[string]) error {
 	for countElem := 0; countElem < 3; countElem++ {
 		curElem, err := s.Pop()
 		if err != nil {
-			return fmt.Errorf("in case ')' in loop iterators %d element has error %+v\n", countElem, err)
+			return fmt.Errorf(closeBracketStackLoopError, countElem, err)
 		}
 		if curElem == "(" {
 			constructor, cErr := s.Pop()
 			if cErr != nil {
-				return fmt.Errorf("in case ')' in pop constructor name has error %+v\n", cErr)
+				return fmt.Errorf(closeBracketStackConstrError, cErr)
 			}
 
 			form, fErr := e.composeLinearForm(constructor, curVariables)
 			if fErr != nil {
-				return fmt.Errorf("in case ')' in compose form has error %+v\n", fErr)
+				return fmt.Errorf(closeBracketComposeError, fErr)
 			}
 
 			s.Push(form)
@@ -136,12 +191,10 @@ func (e *Expression) closeBracketCase(s *stack.Stack[string]) error {
 		curVariables = append(curVariables, curElem)
 	}
 
-	return fmt.Errorf("in case ')' constructor has more than 2 elements\n")
+	return fmt.Errorf(constructorTooMuchParams)
 }
 
 func (e *Expression) composeLinearForm(constructor string, curVariables []string) (string, error) {
-
-	fmt.Println("COMPOSE FORM")
 
 	// работа с добавлением реальных переменных
 	// использую грязный хак: у переменной по условию нет впереди себя открывающей скобки
@@ -150,22 +203,21 @@ func (e *Expression) composeLinearForm(constructor string, curVariables []string
 
 	for _, cv := range curVariables {
 		if len(cv) == 0 {
-			return "", fmt.Errorf("one of variables is an empty")
+			return "", fmt.Errorf(emptyVariable)
 		}
 		if cv[0] != '(' {
 			e.Variables[cv] = struct{}{}
 		}
 	}
 
-	fmt.Println("compose Linear form", constructor, curVariables)
-
 	// если конструктор уже лежал в мапе, то я сравниваю размерности
 	// если они совпадают, то константы уже заданы, иначе - создаю список констант и кладу их в мапу
 	if _, ok := e.NameConstructorToConstant[constructor]; ok {
 		if e.NameConstructorToConstant[constructor].Dimensionality != len(curVariables) {
-			return "", fmt.Errorf(
-				"dimensionality constructors '%s' isn`t equal. was: %d, given: %d",
-				constructor, e.NameConstructorToConstant[constructor].Dimensionality, len(curVariables))
+			return "",
+				fmt.Errorf(dimensionalNotEqual,
+					constructor, e.NameConstructorToConstant[constructor].Dimensionality, len(curVariables),
+				)
 		}
 	} else {
 		e.NameConstructorToConstant[constructor] = Constructor{
@@ -173,8 +225,6 @@ func (e *Expression) composeLinearForm(constructor string, curVariables []string
 			Constants:      generateConstants(constructor, len(curVariables)+1),
 		}
 	}
-
-	fmt.Println("constant", e.NameConstructorToConstant[constructor])
 
 	return getLinearForm(e.NameConstructorToConstant[constructor], curVariables), nil
 }
