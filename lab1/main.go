@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	example := "f(g(xxx), ttt) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(g(z), y) -> g(f(x, y))"
+	example := "f(g(xxx), w(g(y), y)) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(g(z), y) -> g(f(x, y))"
 
 	expr := parser.InitExpression()
 
@@ -17,6 +17,16 @@ func main() {
 
 	if err := expr.ParseExpressionsToLinearRepresentation(); err != nil {
 		fmt.Println("error", err)
+	}
+
+	fmt.Println("_______________________________________________________")
+	fmt.Println("_______________________________________________________")
+
+	toBring := expr.EPs[0].Left
+	bringExpr, err := expr.BringingLinearForm(toBring)
+	fmt.Println("bring: ", bringExpr)
+	if err != nil {
+		fmt.Println("error bring:", err)
 	}
 
 	fmt.Println("END")

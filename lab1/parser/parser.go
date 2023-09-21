@@ -256,3 +256,100 @@ func getLinearForm(c Constructor, variable []string) string {
 
 	return linearForm
 }
+
+func (e *Expression) BringingSuchForLinearForms() ([]ExpressionPair, error) {
+
+	bringingPair := make([]ExpressionPair, len(e.EPs))
+	for i, p := range e.EPs {
+		var err error
+		bringingPair[i].Left, err = e.BringingLinearForm(p.Left)
+		bringingPair[i].Right, err = e.BringingLinearForm(p.Right)
+		if err != nil {
+			return make([]ExpressionPair, 0), fmt.Errorf(parseError, err)
+		}
+	}
+
+	return bringingPair, nil
+}
+
+func (e *Expression) BringingLinearForm(expr string) (string, error) {
+
+	fmt.Println("expr:", expr)
+
+	// TODO: раскрываем скобки умножением
+
+	linearFormWithoutBrackets, wbErr := e.openBracketsMultiplication(expr)
+	if wbErr != nil {
+		return "", fmt.Errorf("can't open multiplicative brackets, %w", wbErr)
+	}
+
+	fmt.Println("after open brackets", linearFormWithoutBrackets)
+
+	// TODO: приводим подобные
+
+	return "", nil
+}
+
+func (e *Expression) openBracketsMultiplication(expr string) (string, error) {
+
+	// Убираем скобки слева и справа от выражения
+	expr = expr[1 : len(expr)-1]
+	fmt.Println(expr)
+
+	re := regexp.MustCompile(`[()*+]|\w+`)
+
+	// Разбил отдельно на имена переменных, константы, скобки, знаки сложения и умножения
+	parts := re.FindAllString(expr, -1)
+
+	for _, p := range parts {
+		fmt.Printf("%s ", p)
+	}
+	fmt.Println()
+
+	stackExpr := stack.InitStackString()
+
+	for i := 0; i < len(parts); i++ {
+		switch parts[i] {
+		case ")":
+			// за закрывающей скобкой всегда следует знак умножения и то, на что мы умножаем
+			if err := e.openDistributivity(stackExpr, parts[i+2]); err != nil {
+				return "", fmt.Errorf("in case ')' was error: %w", err)
+			}
+			i += 2
+		default:
+			stackExpr.Push(parts[i])
+		}
+	}
+
+	return "", nil
+}
+
+func (e *Expression) openDistributivity(s *stack.Stack[string], multiplier string) (err error) {
+
+	var elem string
+	terms := make([]string, 0)
+	operations := make([]string, 0)
+
+	for elem != "(" {
+		elem, err = s.Pop()
+		if err != nil {
+			return fmt.Errorf("in loop pop was %w", err)
+		}
+		if elem == "+" || elem == "*" {
+			operations = append(operations, elem)
+		} else if elem == "(" {
+			continue
+		} else {
+			terms = append(terms, elem)
+		}
+	}
+
+	s.Push(constructDistributivity(terms, operations, multiplier))
+
+	return nil
+}
+
+func constructDistributivity(terms, operations []string, multiplier string) string {
+	// нужно изобрести велосипед с корректным перемножением
+	return ""
+}
