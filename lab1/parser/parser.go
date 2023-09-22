@@ -106,6 +106,9 @@ func (e *Expression) ParseExpressionsToLinearRepresentation() error {
 	for i, p := range e.EPs {
 		var err error
 		linearPair[i].Left, err = e.parseOneFunctionToLinearRepresentation(p.Left)
+		if err != nil {
+			return fmt.Errorf(parseError, err)
+		}
 		linearPair[i].Right, err = e.parseOneFunctionToLinearRepresentation(p.Right)
 		if err != nil {
 			return fmt.Errorf(parseError, err)
@@ -213,6 +216,7 @@ func (e *Expression) composeLinearForm(constructor string, curVariables []string
 	// если конструктор уже лежал в мапе, то я сравниваю размерности
 	// если они совпадают, то константы уже заданы, иначе - создаю список констант и кладу их в мапу
 	if _, ok := e.NameConstructorToConstant[constructor]; ok {
+
 		if e.NameConstructorToConstant[constructor].Dimensionality != len(curVariables) {
 			return "",
 				fmt.Errorf(dimensionalNotEqual,
@@ -274,10 +278,6 @@ func (e *Expression) BringingSuchForLinearForms() ([]ExpressionPair, error) {
 
 func (e *Expression) BringingLinearForm(expr string) (string, error) {
 
-	fmt.Println("expr:", expr)
-
-	// TODO: раскрываем скобки умножением
-
 	linearFormWithoutBrackets, wbErr := e.openBracketsMultiplication(expr)
 	if wbErr != nil {
 		return "", fmt.Errorf("can't open multiplicative brackets, %w", wbErr)
@@ -290,11 +290,10 @@ func (e *Expression) BringingLinearForm(expr string) (string, error) {
 	return "", nil
 }
 
-func (e *Expression) openBracketsMultiplication(expr string) (string, error) {
+func (e *Expression) openBracketsMultiplication(expr string) ([]string, error) {
 
 	// Убираем скобки слева и справа от выражения
 	expr = expr[1 : len(expr)-1]
-	fmt.Println(expr)
 
 	re := regexp.MustCompile(`[()*+]|\w+`)
 
@@ -313,7 +312,7 @@ func (e *Expression) openBracketsMultiplication(expr string) (string, error) {
 		case ")":
 			// за закрывающей скобкой всегда следует знак умножения и то, на что мы умножаем
 			if err := e.openDistributivity(stackExpr, parts[i+2]); err != nil {
-				return "", fmt.Errorf("in case ')' was error: %w", err)
+				return make([]string, 0), fmt.Errorf("in case ')' was error: %w", err)
 			}
 			i += 2
 		default:
@@ -321,35 +320,56 @@ func (e *Expression) openBracketsMultiplication(expr string) (string, error) {
 		}
 	}
 
-	return "", nil
+	return stackExpr.GetBufferStack(), nil
 }
 
 func (e *Expression) openDistributivity(s *stack.Stack[string], multiplier string) (err error) {
 
 	var elem string
-	terms := make([]string, 0)
-	operations := make([]string, 0)
+	elements := make([]string, 0)
 
-	for elem != "(" {
+	for s.Size() > 0 {
 		elem, err = s.Pop()
 		if err != nil {
 			return fmt.Errorf("in loop pop was %w", err)
 		}
-		if elem == "+" || elem == "*" {
-			operations = append(operations, elem)
-		} else if elem == "(" {
-			continue
+
+		if elem == "(" {
+			break
 		} else {
-			terms = append(terms, elem)
+			elements = append(elements, elem)
 		}
 	}
 
-	s.Push(constructDistributivity(terms, operations, multiplier))
+	constructDistributivity(s, elements, multiplier)
 
 	return nil
 }
 
-func constructDistributivity(terms, operations []string, multiplier string) string {
-	// нужно изобрести велосипед с корректным перемножением
-	return ""
+func constructDistributivity(s *stack.Stack[string], elements []string, multiplier string) {
+
+	// развернул массив, чтобы было удобно работать с индексами
+	reverseArray(elements)
+
+	newElements := make([]string, 0)
+
+	for _, elem := range elements {
+		if elem == "+" {
+			newElements = append(newElements, "*", multiplier, elem)
+		} else {
+			newElements = append(newElements, elem)
+		}
+	}
+
+	newElements = append(newElements, "*", multiplier)
+
+	for _, elem := range newElements {
+		s.Push(elem)
+	}
+}
+
+func reverseArray(a []string) {
+	for i := 0; i < len(a)/2; i++ {
+		a[i], a[len(a)-i-1] = a[len(a)-i-1], a[i]
+	}
 }

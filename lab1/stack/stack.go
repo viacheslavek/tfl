@@ -12,33 +12,37 @@ func InitStackString() *Stack[string] {
 	}
 }
 
-func (obj *Stack[T]) Push(elem T) {
-	obj.buffer = append(obj.buffer, elem)
+func (s *Stack[T]) Push(elem T) {
+	s.buffer = append(s.buffer, elem)
 }
 
-func (obj *Stack[T]) Pop() (T, error) {
-	if len(obj.buffer) > 0 {
-		elem := obj.buffer[len(obj.buffer)-1]
-		obj.buffer = obj.buffer[:len(obj.buffer)-1]
+func (s *Stack[T]) Pop() (T, error) {
+	if len(s.buffer) > 0 {
+		elem := s.buffer[len(s.buffer)-1]
+		s.buffer = s.buffer[:len(s.buffer)-1]
 		return elem, nil
 	}
 	var temp T
 	return temp, errors.New("empty buffer")
 }
 
-func (obj *Stack[T]) Back() (T, error) {
-	if len(obj.buffer) > 0 {
-		elem := obj.buffer[len(obj.buffer)-1]
+func (s *Stack[T]) Back() (T, error) {
+	if len(s.buffer) > 0 {
+		elem := s.buffer[len(s.buffer)-1]
 		return elem, nil
 	}
 	var temp T
 	return temp, errors.New("empty buffer")
 }
 
-func (obj *Stack[T]) Size() int {
-	return len(obj.buffer)
+func (s *Stack[T]) Size() int {
+	return len(s.buffer)
 }
 
-func (obj *Stack[T]) Clear() {
-	obj.buffer = make([]T, 0)
+func (s *Stack[T]) Clear() {
+	s.buffer = make([]T, 0)
+}
+
+func (s *Stack[T]) GetBufferStack() []T {
+	return s.buffer
 }
