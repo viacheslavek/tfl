@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	example := "f(g(xxx), w(g(y), y)) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(y) -> g(f(x, y))"
+	example := "f(g(x), w(g(y), z)) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(y) -> g(f(x, y))"
 
 	expr := parser.InitExpression()
 
@@ -24,11 +24,16 @@ func main() {
 	fmt.Println("_______________________________________________________")
 	fmt.Println("_______________________________________________________")
 
-	bringExpr, err := expr.BringingSuchForLinearForms()
-	fmt.Println("bring: ", bringExpr)
+	err := expr.BringingSuchForLinearForms()
 	if err != nil {
 		fmt.Println("error bring:", err)
 	}
+
+	//bringExpr, err := expr.BringingLinearForm(expr.EPs[0].Left.Name)
+	//fmt.Println("bring: ", bringExpr)
+	//if err != nil {
+	//	fmt.Println("error bring:", err)
+	//}
 
 	fmt.Println("END")
 

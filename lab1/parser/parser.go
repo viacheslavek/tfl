@@ -15,8 +15,15 @@ type Expression struct {
 }
 
 type ExpressionPair struct {
-	Left  string
-	Right string
+	Left  ConstantAndVariables
+	Right ConstantAndVariables
+}
+
+type VarToConstCombination map[string][]string
+
+type ConstantAndVariables struct {
+	Name string
+	cAv  VarToConstCombination
 }
 
 type Constructor struct {
@@ -61,7 +68,10 @@ func (e *Expression) ExtractPair(input string) error {
 		if len(match) == 3 {
 			left := strings.TrimSpace(match[1])
 			right := strings.TrimSpace(match[2])
-			pair := ExpressionPair{Left: left, Right: right}
+			pair := ExpressionPair{
+				Left:  ConstantAndVariables{Name: left},
+				Right: ConstantAndVariables{Name: right},
+			}
 			e.EPs = append(e.EPs, pair)
 		} else {
 			return fmt.Errorf(basePairFail + "\n" + arrowError)
@@ -76,7 +86,7 @@ func (e *Expression) ExtractPair(input string) error {
 func (e *Expression) ToStringLinearExpression() string {
 	linear := ""
 	for i, expr := range e.EPs {
-		linear += fmt.Sprintf("%d:\nleft: %s\nright: %s\n", i, expr.Left, expr.Right)
+		linear += fmt.Sprintf("%d:\nleft: %s\nright: %s\n", i, expr.Left.Name, expr.Right.Name)
 	}
 	linear += "\n"
 	return linear
@@ -105,11 +115,11 @@ func (e *Expression) ParseExpressionsToLinearRepresentation() error {
 	linearPair := make([]ExpressionPair, len(e.EPs))
 	for i, p := range e.EPs {
 		var err error
-		linearPair[i].Left, err = e.parseOneFunctionToLinearRepresentation(p.Left)
+		linearPair[i].Left.Name, err = e.parseOneFunctionToLinearRepresentation(p.Left.Name)
 		if err != nil {
 			return fmt.Errorf(parseError, err)
 		}
-		linearPair[i].Right, err = e.parseOneFunctionToLinearRepresentation(p.Right)
+		linearPair[i].Right.Name, err = e.parseOneFunctionToLinearRepresentation(p.Right.Name)
 		if err != nil {
 			return fmt.Errorf(parseError, err)
 		}
@@ -261,33 +271,44 @@ func getLinearForm(c Constructor, variable []string) string {
 	return linearForm
 }
 
-func (e *Expression) BringingSuchForLinearForms() ([]ExpressionPair, error) {
+func (e *Expression) ToStringVarToConstCombination() string {
+	linear := ""
+	for i, expr := range e.EPs {
+		linear += fmt.Sprintf("%d:\nleft: %+v\nright: %+v\n", i, expr.Left.cAv, expr.Right.cAv)
+	}
+	linear += "\n"
+	return linear
+}
 
-	bringingPair := make([]ExpressionPair, len(e.EPs))
+func (e *Expression) BringingSuchForLinearForms() error {
+
 	for i, p := range e.EPs {
 		var err error
-		bringingPair[i].Left, err = e.BringingLinearForm(p.Left)
-		bringingPair[i].Right, err = e.BringingLinearForm(p.Right)
+		e.EPs[i].Left.cAv, err = e.BringingLinearForm(p.Left.Name)
+		e.EPs[i].Right.cAv, err = e.BringingLinearForm(p.Right.Name)
 		if err != nil {
-			return make([]ExpressionPair, 0), fmt.Errorf(parseError, err)
+			return fmt.Errorf(parseError, err)
 		}
 	}
 
-	return bringingPair, nil
+	log.Println("after similar ones:\n", e.ToStringVarToConstCombination())
+
+	return nil
 }
 
-func (e *Expression) BringingLinearForm(expr string) (string, error) {
+func (e *Expression) BringingLinearForm(expr string) (VarToConstCombination, error) {
 
 	linearFormWithoutBrackets, wbErr := e.openBracketsMultiplication(expr)
 	if wbErr != nil {
-		return "", fmt.Errorf("can't open multiplicative brackets, %w", wbErr)
+		return make(VarToConstCombination, 0), fmt.Errorf("can't open multiplicative brackets, %w", wbErr)
 	}
 
-	fmt.Println("after open brackets", linearFormWithoutBrackets)
+	ansVarCombination, sovErr := e.similarOnesForVariable(linearFormWithoutBrackets)
+	if sovErr != nil {
+		return make(VarToConstCombination, 0), fmt.Errorf("can't open multiplicative brackets, %w", sovErr)
+	}
 
-	// TODO: приводим подобные
-
-	return "", nil
+	return ansVarCombination, nil
 }
 
 func (e *Expression) openBracketsMultiplication(expr string) ([]string, error) {
@@ -299,11 +320,6 @@ func (e *Expression) openBracketsMultiplication(expr string) ([]string, error) {
 
 	// Разбил отдельно на имена переменных, константы, скобки, знаки сложения и умножения
 	parts := re.FindAllString(expr, -1)
-
-	for _, p := range parts {
-		fmt.Printf("%s ", p)
-	}
-	fmt.Println()
 
 	stackExpr := stack.InitStackString()
 
@@ -371,5 +387,49 @@ func constructDistributivity(s *stack.Stack[string], elements []string, multipli
 func reverseArray(a []string) {
 	for i := 0; i < len(a)/2; i++ {
 		a[i], a[len(a)-i-1] = a[len(a)-i-1], a[i]
+	}
+}
+
+func (e *Expression) similarOnesForVariable(expr []string) (VarToConstCombination, error) {
+
+	vcc := make(VarToConstCombination)
+
+	curConstant := make([]string, 0)
+
+	for _, elem := range expr {
+		if elem == "+" {
+			e.addConstantFromVariableName(curConstant, &vcc)
+			curConstant = make([]string, 0)
+		} else {
+			curConstant = append(curConstant, elem)
+		}
+	}
+
+	e.addConstantFromVariableName(curConstant, &vcc)
+
+	return vcc, nil
+}
+
+func (e *Expression) addConstantFromVariableName(constants []string, vcc *VarToConstCombination) {
+	// если первый символ переменная, а не свободный член
+	if _, isVar := e.Variables[constants[0]]; isVar {
+		// если до этого не было констант у переменной
+		if _, inVcc := (*vcc)[constants[0]]; !inVcc {
+			(*vcc)[constants[0]] = append(make([]string, 0), constants[2:]...)
+			// уже были
+		} else {
+			(*vcc)[constants[0]] = append((*vcc)[constants[0]], "+")
+			(*vcc)[constants[0]] = append((*vcc)[constants[0]], constants[2:]...)
+		}
+		// свободный член
+	} else {
+		// если до этого не было констант у переменной
+		if _, inVcc := (*vcc)[" "]; !inVcc {
+			(*vcc)[" "] = append(make([]string, 0), constants...)
+			// уже были
+		} else {
+			(*vcc)[" "] = append((*vcc)[" "], "+")
+			(*vcc)[" "] = append((*vcc)[" "], constants...)
+		}
 	}
 }
