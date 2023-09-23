@@ -42,6 +42,7 @@ func main() {
 			log.Fatal(sErr)
 		}
 		fmt.Println("Введите текст для записи в файл (Ctrl+D для завершения ввода):")
+		fmt.Println("Пример: 'h(g(x)) -> s(y)'")
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			expression := scanner.Text() + "\n"
