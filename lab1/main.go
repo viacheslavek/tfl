@@ -33,4 +33,8 @@ func main() {
 
 	fmt.Println("END")
 
+	fmt.Println(expr.MakeFirstInequality())
+
+	fmt.Println(expr.MakeSecondInequality())
+
 }
