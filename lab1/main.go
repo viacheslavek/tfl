@@ -37,4 +37,10 @@ func main() {
 
 	fmt.Println(expr.MakeSecondInequality())
 
+	fmt.Println(expr.MakeThirdInequality())
+
+	fmt.Println(expr.MakeForthInequality())
+
+	fmt.Println(expr.MakeFifthInequality())
+
 }
