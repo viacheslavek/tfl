@@ -1,46 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab1/parser"
+	"os"
 )
 
 func main() {
 
 	// example := "f(g(x), w(g(y), z)) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(y) -> g(f(x, y))"
 
-	example := "h(g(x)) -> s(y)\ns(y) -> g(f(x, y))"
+	example := "h(x) -> s(x)"
 
-	expr := parser.InitExpression()
-
-	if err := expr.ExtractPair(example); err != nil {
-		fmt.Println("extract pair err", err)
-		panic(err)
-	}
-
-	if err := expr.ParseExpressionsToLinearRepresentation(); err != nil {
-		fmt.Println("error", err)
-		panic(err)
-	}
-
-	err := expr.BringingSuchForLinearForms()
+	report, err := parser.Parse(example)
 	if err != nil {
-		fmt.Println("error bring:", err)
 		panic(err)
 	}
 
-	fmt.Println(expr.ToStringConstructions())
+	file, oErr := os.Create("lab1/solver.smt2")
+	if oErr != nil {
+		panic(oErr)
+	}
+	defer func() {
+		_ = file.Close()
+	}()
 
-	fmt.Println("END")
-
-	fmt.Println(expr.MakeFirstInequality())
-
-	fmt.Println(expr.MakeSecondInequality())
-
-	fmt.Println(expr.MakeThirdInequality())
-
-	fmt.Println(expr.MakeForthInequality())
-
-	fmt.Println(expr.MakeFifthInequality())
+	_, wErr := file.WriteString(report)
+	if wErr != nil {
+		panic(wErr)
+	}
 
 }

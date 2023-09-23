@@ -5,6 +5,76 @@ import (
 	"github.com/VyacheslavIsWorkingNow/tfl/lab1/stack"
 )
 
+// TODO: wrap error
+
+func (e *Expression) GenerateSMT2() (string, error) {
+	report := ""
+
+	report += "(set-logic QF_NIA)\n"
+
+	report += "\n"
+
+	for _, s := range e.makeDeclareFunction() {
+		report += s
+		report += "\n"
+	}
+
+	report += "\n"
+
+	first, firstErr := e.makeFirstInequality()
+	if firstErr != nil {
+		return "", firstErr
+	}
+	for _, s := range first {
+		report += s
+		report += "\n"
+	}
+
+	report += "\n"
+
+	second, secondErr := e.makeSecondInequality()
+	if secondErr != nil {
+		return "", secondErr
+	}
+	for _, s := range second {
+		report += s
+		report += "\n"
+	}
+
+	report += "\n"
+
+	third, thirdErr := e.makeThirdInequality()
+	if thirdErr != nil {
+		return "", thirdErr
+	}
+	for _, s := range third {
+		report += s
+		report += "\n"
+	}
+
+	report += "\n"
+
+	forth := e.makeForthInequality()
+	report += forth
+	report += "\n"
+
+	report += "\n"
+
+	fifth := e.makeFifthInequality()
+	report += fifth
+	report += "\n"
+
+	report += "\n"
+
+	report += "(check-sat)\n"
+	report += "(get-model)\n"
+	report += "(exit)\n"
+
+	return report, nil
+}
+
+// TODO: ПОКА НЕ СМОТРИТЕ, тут очень неаккуратный код :(
+
 func convertFromInfixToPrefixNotation(elems []string) (string, error) {
 
 	s := stack.InitStackString()
@@ -31,7 +101,7 @@ func convertFromInfixToPrefixNotation(elems []string) (string, error) {
 }
 
 // Коэффициенты слева перед переменной >= коэффициенты справа перед переменной для всех переменных
-func (e *Expression) MakeFirstInequality() ([]string, error) {
+func (e *Expression) makeFirstInequality() ([]string, error) {
 
 	firstInequalities := make([]string, 0)
 
@@ -111,7 +181,7 @@ func getFirstExpression(valueL, valueR []string) (string, error) {
 }
 
 // Коэффициенты слева свободных членов >= коэффициенты справа свободных членов
-func (e *Expression) MakeSecondInequality() ([]string, error) {
+func (e *Expression) makeSecondInequality() ([]string, error) {
 	secondInequalities := make([]string, 0)
 
 	for _, pairs := range e.EPs {
@@ -160,7 +230,7 @@ func getSecondExpression(valueL, valueR []string) (string, error) {
 }
 
 // Коэффициенты слева всего выражения через or > коэффициенты справа всего выражения через or
-func (e *Expression) MakeThirdInequality() ([]string, error) {
+func (e *Expression) makeThirdInequality() ([]string, error) {
 	thirdInequalities := make([]string, 0)
 
 	for _, pairs := range e.EPs {
@@ -250,7 +320,7 @@ func getThirdExpression(valueL, valueR []string) (string, error) {
 }
 
 // Коэффициенты конструкторов через and для переменных >= 1 и для констант >= 0
-func (e *Expression) MakeForthInequality() string {
+func (e *Expression) makeForthInequality() string {
 
 	forthInequalitiesPred := make([]string, 0)
 	for _, nmt := range e.NameConstructorToConstant {
@@ -283,7 +353,7 @@ func getForth(constructor Constructor) string {
 }
 
 // Коэффициенты конструкторов через and, в котором внутри еще or (переменных > 1 и для констант > 0)
-func (e *Expression) MakeFifthInequality() string {
+func (e *Expression) makeFifthInequality() string {
 	fifthInequalitiesPred := make([]string, 0)
 	for _, nmt := range e.NameConstructorToConstant {
 		fifthInequalitiesPred = append(fifthInequalitiesPred, getFifth(nmt))
@@ -312,4 +382,24 @@ func getFifth(constructor Constructor) string {
 			constructor.Constants[0], constructor.Constants[1], constructor.Constants[2])
 	}
 	return ""
+}
+
+func (e *Expression) makeDeclareFunction() []string {
+
+	constants := make([]string, 0)
+	for _, c := range e.NameConstructorToConstant {
+		constants = append(constants, declareFunction(c.Constants)...)
+	}
+
+	return constants
+}
+
+func declareFunction(constants []string) []string {
+	declare := make([]string, 0)
+
+	for _, c := range constants {
+		declare = append(declare, fmt.Sprintf("(declare-fun %s () Int)", c))
+	}
+
+	return declare
 }

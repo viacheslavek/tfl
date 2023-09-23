@@ -39,24 +39,27 @@ func InitExpression() *Expression {
 	}
 }
 
-func Parse(input string) error {
+func Parse(input string) (string, error) {
 	expr := InitExpression()
 
 	if err := expr.ExtractPair(input); err != nil {
-		return fmt.Errorf(parsePairError, err)
+		return "", fmt.Errorf(parsePairError, err)
 	}
 
 	if err := expr.ParseExpressionsToLinearRepresentation(); err != nil {
-		return fmt.Errorf(parseRepresentationError, err)
+		return "", fmt.Errorf(parseRepresentationError, err)
 	}
 
 	if err := expr.BringingSuchForLinearForms(); err != nil {
-		return fmt.Errorf("parse error in bringing such %+v", err)
+		return "", fmt.Errorf("parse error in bringing such %+v", err)
 	}
 
-	panic("я еще не готова.")
+	report, err := expr.GenerateSMT2()
+	if err != nil {
+		return "", fmt.Errorf("parse error in generate smt2 %+v", err)
+	}
 
-	return nil
+	return report, nil
 }
 
 func (e *Expression) ExtractPair(input string) error {
