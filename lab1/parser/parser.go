@@ -50,6 +50,10 @@ func Parse(input string) error {
 		return fmt.Errorf(parseRepresentationError, err)
 	}
 
+	if err := expr.BringingSuchForLinearForms(); err != nil {
+		return fmt.Errorf("parse error in bringing such %+v", err)
+	}
+
 	panic("я еще не готова.")
 
 	return nil
@@ -302,6 +306,8 @@ func (e *Expression) BringingLinearForm(expr string) (VarToConstCombination, err
 	if wbErr != nil {
 		return make(VarToConstCombination, 0), fmt.Errorf("can't open multiplicative brackets, %w", wbErr)
 	}
+
+	log.Printf("after open multiplicativity:\n%+v\n", linearFormWithoutBrackets)
 
 	ansVarCombination, sovErr := e.similarOnesForVariable(linearFormWithoutBrackets)
 	if sovErr != nil {
