@@ -22,7 +22,7 @@ func main() {
 		panic(err)
 	}
 
-	file, oErr := os.Create("lab1/solver.smt2")
+	file, oErr := os.Create("solver.smt2")
 	if oErr != nil {
 		panic(oErr)
 	}
@@ -35,7 +35,7 @@ func main() {
 		panic(wErr)
 	}
 
-	cmd := exec.Command("z3", "lab1/solver.smt2")
+	cmd := exec.Command("z3", "solver.smt2")
 
 	output, eErr := cmd.CombinedOutput()
 	if wErr != nil {
