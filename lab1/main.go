@@ -1,30 +1,86 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab1/parser"
+	"log"
 	"os"
 	"os/exec"
 )
 
 // TODO: заменить паники на что-то более нежное
 
+const (
+	fileReadName = "fileRead.txt"
+	output       = "solver.smt2"
+)
+
 func main() {
 
-	// example := "f(g(x), w(g(y), z)) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(y) -> g(f(x, y))"
+	//example := "f(g(x), w(g(y), z)) -> g(f(x, y))\nh(g(x)) -> s(y)\ns(y) -> g(f(x, y))"
 
-	// На вход подать неравенства через стрелку и знак \n
+	fmt.Println("Вы хотите написать выражение в файл или консоль?")
+	fmt.Println("Интерактивный ввод: 1\nЧтение из файла: 2-9")
 
-	example := "h(x, y) -> s(x, y)"
+	var whereRead int
+	_, wrErr := fmt.Scanf("%d", &whereRead)
+	if wrErr != nil {
+		log.Fatal(wrErr)
+	}
+
+	if whereRead == 1 {
+
+		fileStdin, oErr := os.Create(fileReadName)
+		if oErr != nil {
+			log.Fatal(oErr)
+		}
+		if tErr := fileStdin.Truncate(0); tErr != nil {
+			log.Fatal(tErr)
+		}
+		if _, sErr := fileStdin.Seek(0, 0); sErr != nil {
+			log.Fatal(sErr)
+		}
+		fmt.Println("Введите текст для записи в файл (Ctrl+D для завершения ввода):")
+		scanner := bufio.NewScanner(os.Stdin)
+		for scanner.Scan() {
+			expression := scanner.Text() + "\n"
+			_, wErr := fileStdin.WriteString(expression)
+			if wErr != nil {
+				log.Fatal(wErr)
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	fileRead, rErr := os.Open(fileReadName)
+	if rErr != nil {
+		log.Fatal(rErr)
+	}
+	defer func() {
+		_ = fileRead.Close()
+	}()
+
+	scanner := bufio.NewScanner(fileRead)
+
+	example := ""
+	for scanner.Scan() {
+		example += scanner.Text() + "\n"
+	}
+
+	example = example[:len(example)-1]
 
 	report, err := parser.Parse(example)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	file, oErr := os.Create("solver.smt2")
+	file, oErr := os.Create(output)
 	if oErr != nil {
-		panic(oErr)
+		log.Fatal(oErr)
 	}
 	defer func() {
 		_ = file.Close()
@@ -32,17 +88,17 @@ func main() {
 
 	_, wErr := file.WriteString(report)
 	if wErr != nil {
-		panic(wErr)
+		log.Fatal(wErr)
 	}
 
-	cmd := exec.Command("z3", "solver.smt2")
+	cmd := exec.Command("z3", output)
 
-	output, eErr := cmd.CombinedOutput()
+	result, eErr := cmd.CombinedOutput()
 	if wErr != nil {
-		panic(eErr)
+		log.Fatal(eErr)
 	}
 
 	fmt.Println("Результат выполнения команды:")
-	fmt.Println(string(output))
+	fmt.Println(string(result))
 
 }
