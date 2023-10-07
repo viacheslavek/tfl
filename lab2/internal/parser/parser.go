@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+func ParseRegex(regex string) (*syntax.Regexp, error) {
+	return syntax.Parse(regex, 0)
+}
+
 const (
 	dotFileName = "lab2/syntax_tree.dot"
 	pngFileName = "lab2/syntax_tree.png"
@@ -16,7 +20,7 @@ const (
 
 var nodeCounter int
 
-func ParseRegex(regex string) error {
+func ParseRegexInDot(regex string) error {
 	parseTree, pErr := syntax.Parse(regex, 0)
 	if pErr != nil {
 		return fmt.Errorf("Ошибка разбора регулярного выражения:%w\n", pErr)

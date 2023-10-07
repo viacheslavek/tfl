@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/gluskov"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/parser"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/reggen"
 )
@@ -15,11 +16,16 @@ func main() {
 
 	fmt.Println("regex:", regexes[0])
 
-	// regex := "((bc)*)*"
 	regex := regexes[0]
 
-	err := parser.ParseRegex(regex)
+	_ = parser.ParseRegexInDot(regex)
+
+	tree, err := parser.ParseRegex(regex)
+
 	if err != nil {
-		fmt.Println("Проблема", err)
+		fmt.Println("беда в парсере", err)
 	}
+
+	gluskov.Translate(tree)
+
 }
