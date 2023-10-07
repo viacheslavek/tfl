@@ -1,6 +1,9 @@
 package reggen
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 const (
 	maxAlphabetNumber = 52
@@ -18,18 +21,36 @@ type RegexGeneratorParams struct {
 }
 
 func New(
+	countRegex int,
 	alphabetSize int,
 	starHeight int,
 	letterCount int,
-) *RegexGeneratorParams {
+) (*Regexes, error) {
+	rgp, err := NewRGP(alphabetSize, starHeight, letterCount)
+	if err != nil {
+		return &Regexes{}, err
+	}
+	return &Regexes{
+		rgp:        *rgp,
+		countRegex: countRegex,
+	}, nil
+}
+
+func NewRGP(
+	alphabetSize int,
+	starHeight int,
+	letterCount int,
+) (*RegexGeneratorParams, error) {
+	if alphabetSize > maxAlphabetNumber {
+		return &RegexGeneratorParams{},
+			fmt.Errorf("max alphabet size is %d, get: %d\n", maxAlphabetNumber, alphabetSize)
+	}
 	return &RegexGeneratorParams{
 		alphabetSize: alphabetSize,
 		starHeight:   starHeight,
 		letterCount:  letterCount,
-	}
+	}, nil
 }
-
-// TODO: все переделать - генерирую обычное регулярное выражение в виде строки
 
 func (r *Regexes) Generate() []string {
 
@@ -42,47 +63,59 @@ func (r *Regexes) Generate() []string {
 	return regexes
 }
 
-type generateRegexPresentation struct {
-	rgp                RegexGeneratorParams
-	nestingParentheses int
-	nestingStars       int
-}
-
 func (rgp *RegexGeneratorParams) Generate() string {
 
-	// This is coping
-	grp := generateRegexPresentation{
-		rgp: *rgp,
-	}
-
-	regex := ""
-
-	grp.recursiveGenerate(&regex)
+	regex := rgp.generateRegexRecursive(rgp.letterCount, rgp.alphabetSize)
 
 	return regex
 }
 
-func (grp *generateRegexPresentation) recursiveGenerate(regex *string) {
-	if grp.rgp.letterCount == 0 {
-		return
+func (rgp *RegexGeneratorParams) generateRegexRecursive(maxLength int, maxStarHeight int) string {
+	if maxLength <= 0 || maxStarHeight <= 0 {
+		return ""
 	}
 
-	grp.rgp.letterCount--
+	operation := rand.Intn(4)
 
-	// TODO: тут создаю рекурсивную функцию
-	// где я пока не получил 0 в длине - вызываю
-	// но мне надо уметь закрывать скобки
-	// то есть надо еще понимать, смогу ли я вообще при заданных параметрах что-то сделать
-	// звездная высота требует ((a*)*)* скобок
-	// то есть надо сделать внутреннюю структуру, с информацией о вложенности внутри скобочной последовательности
-	// и о вложенности внутри звездной высоты
-
-	grp.recursiveGenerate(regex)
+	switch operation {
+	case 0:
+		left := rgp.generateRegexRecursive(maxLength/2, maxStarHeight)
+		right := rgp.generateRegexRecursive(maxLength/2, maxStarHeight)
+		return concat(left, right)
+	case 1:
+		left := rgp.generateRegexRecursive(maxLength-1, maxStarHeight)
+		right := rgp.generateRegexRecursive(maxLength-1, maxStarHeight)
+		return alternative(left, right)
+	case 2:
+		subExpr := rgp.generateRegexRecursive(maxLength-1, maxStarHeight-1)
+		return starKellie(subExpr)
+	default:
+		letter := getLetter(rand.Intn(rgp.alphabetSize))
+		return letter
+	}
 }
 
-func getLetter(numLetter int) (string, error) {
-	if numLetter > maxAlphabetNumber {
-		return "", fmt.Errorf("letter num is too big: max is %d, get: %d", maxAlphabetNumber, numLetter)
+func concat(left, right string) string {
+	return left + right
+}
+
+func alternative(left, right string) string {
+	if len(left) > 0 && len(right) > 0 {
+		return "(" + left + "|" + right + ")"
 	}
-	return string('a' - 1 + byte(numLetter)), nil
+	return ""
+}
+
+func starKellie(expr string) string {
+	if len(expr) > 1 {
+		return "(" + expr + ")" + "*"
+	} else if len(expr) == 1 {
+		return expr + "*"
+	} else {
+		return ""
+	}
+}
+
+func getLetter(numLetter int) string {
+	return string('a' + byte(numLetter))
 }
