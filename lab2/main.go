@@ -17,7 +17,7 @@ func main() {
 	//
 	//regex := regexes[0]
 
-	regex := "abc"
+	regex := "(ba*b*)c"
 
 	_ = parser.ParseRegexInDot(regex)
 
@@ -27,7 +27,7 @@ func main() {
 		fmt.Println("беда в парсере", err)
 	}
 
-	automaton := gluskov.Translate(tree)
+	automaton := gluskov.BuildMachine(tree)
 
 	err = automaton.GetDotMachine()
 	if err != nil {

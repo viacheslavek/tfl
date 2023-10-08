@@ -10,38 +10,45 @@ type StateTransitions map[rune][]State
 
 type Machine struct {
 	StartState   int
-	FinalStates  []int
+	FinalStates  []State
 	Transitions  map[State]StateTransitions
 	StateCounter int
 }
 
-func Translate(st *syntax.Regexp) *Machine {
+func BuildMachine(st *syntax.Regexp) *Machine {
 	machine := &Machine{
 		StartState:   0,
-		FinalStates:  []int{},
+		FinalStates:  make([]State, 0),
 		Transitions:  make(map[State]StateTransitions),
 		StateCounter: 1,
 	}
 
-	machine.buildMachine(st, State(machine.StartState))
+	machine.handleRegex(st, State(machine.StartState), true)
 
 	return machine
 }
 
-func (m *Machine) buildMachine(node *syntax.Regexp, currentState State) State {
+func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal bool) State {
 	switch node.Op {
 	case syntax.OpLiteral:
-		return m.addLiteral(currentState, node)
+		return m.handleLiteral(currentState, node, isFinal)
 	case syntax.OpConcat:
-		return m.addConcat(currentState, node)
+		// TODO: реализовать
+		return m.handleConcat(currentState, node, isFinal)
 	case syntax.OpAlternate:
-		return m.addAlternate(currentState, node)
+		// TODO: надо понять
+		// Так как альтернатива может быт либо финальной, либо вызывать из concat,
+		// тогда здесь ее можно не обрабатывать
+		states := m.handleAlternate(currentState, node, isFinal)
+		fmt.Println(states)
 	case syntax.OpStar:
-		return m.addStar(currentState, node)
+		// TODO: реализовать
+		return m.handleStar(currentState, node)
 	case syntax.OpCapture:
-		return m.addCapture(currentState, node)
+		return m.handleCapture(currentState, node, isFinal)
 	case syntax.OpCharClass:
-		return m.addCharClass(currentState, node)
+		// TODO: реализовать
+		return m.handleCharClass(currentState, node)
 	}
 	fmt.Println("вышли за case")
 	return currentState
@@ -60,41 +67,54 @@ func (m *Machine) addState() State {
 	return newState
 }
 
-func (m *Machine) addLiteral(currentState State, node *syntax.Regexp) State {
+func (m *Machine) addFinal(s State) {
+	m.FinalStates = append(m.FinalStates, s)
+}
+
+func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal bool) State {
 	for _, symbol := range node.Rune {
 		nextState := m.addState()
 		m.addTransition(currentState, nextState, symbol)
 		currentState = nextState
 	}
+	if isFinal {
+		m.addFinal(currentState)
+	}
 	return currentState
 }
 
-// TODO: сделать корректное добавление конкатенации - просто соединяем состояния
-// TODO: подумать больше
-func (m *Machine) addConcat(currentState State, node *syntax.Regexp) State {
+// TODO: сделать корректное добавление конкатенации
+// TODO: подумать больше, ведь это вообще главное связующее
+func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal bool) State {
+
 	panic("implement me")
 }
 
-// TODO: сделать корректное добавление альтернативы - еще раз в тетрадь
-// TODO: подумать больше
-func (m *Machine) addAlternate(currentState State, node *syntax.Regexp) State {
+func (m *Machine) handleAlternate(currentState State, node *syntax.Regexp, isFinal bool) []State {
+	fmt.Println("alterNode", node)
+	leftState := m.handleRegex(node.Sub[0], currentState, isFinal)
+	rightState := m.handleRegex(node.Sub[1], currentState, isFinal)
+
+	if isFinal {
+		m.addFinal(leftState)
+		m.addFinal(rightState)
+	}
+	return []State{leftState, rightState}
+}
+
+// TODO: сделать корректное добавление звезды клини
+func (m *Machine) handleStar(currentState State, node *syntax.Regexp) State {
 	panic("implement me")
 }
 
-// TODO: сделать корректное добавление звезды клини - еще раз нарисовать в тетради
-// TODO: подумать больше
-func (m *Machine) addStar(currentState State, node *syntax.Regexp) State {
-	panic("implement me")
+func (m *Machine) handleCapture(currentState State, node *syntax.Regexp, isFinal bool) State {
+	if len(node.Sub) != 1 {
+		panic("Длина node.Sub в захвате не равна 1 -> такой случай я не рассматривал")
+	}
+	return m.handleRegex(node.Sub[0], currentState, isFinal)
 }
 
-// TODO: сделать корректное добавление захвата - просто провалиться вниз
-// TODO: подумать больше
-func (m *Machine) addCapture(currentState State, node *syntax.Regexp) State {
-	panic("implement me")
-}
-
-// TODO: сделать корректное добавление самой внутренней альтернативы (это если (a|b))
-// TODO: подумать больше
-func (m *Machine) addCharClass(currentState State, node *syntax.Regexp) State {
+// TODO: Здесь все не сложно, как с обычной альтернативой
+func (m *Machine) handleCharClass(currentState State, node *syntax.Regexp) State {
 	panic("implement me")
 }
