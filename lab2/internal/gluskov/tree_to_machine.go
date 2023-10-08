@@ -1,6 +1,7 @@
 package gluskov
 
 import (
+	"fmt"
 	"regexp/syntax"
 )
 
@@ -22,26 +23,28 @@ func Translate(st *syntax.Regexp) *Machine {
 		StateCounter: 1,
 	}
 
-	machine.buildMachine(st, machine.StartState)
+	machine.buildMachine(st, State(machine.StartState))
 
 	return machine
 }
 
-func (m *Machine) buildMachine(node *syntax.Regexp, currentState int) {
+func (m *Machine) buildMachine(node *syntax.Regexp, currentState State) State {
 	switch node.Op {
 	case syntax.OpLiteral:
-		m.addLiteral(currentState)
+		return m.addLiteral(currentState, node)
 	case syntax.OpConcat:
-		m.addConcat(currentState)
+		return m.addConcat(currentState, node)
 	case syntax.OpAlternate:
-		m.addAlternate(currentState)
+		return m.addAlternate(currentState, node)
 	case syntax.OpStar:
-		m.addStar(currentState)
+		return m.addStar(currentState, node)
 	case syntax.OpCapture:
-		m.addCapture(currentState)
+		return m.addCapture(currentState, node)
 	case syntax.OpCharClass:
-		m.addCharClass(currentState)
+		return m.addCharClass(currentState, node)
 	}
+	fmt.Println("вышли за case")
+	return currentState
 }
 
 func (m *Machine) addTransition(fromState, toState State, symbol rune) {
@@ -57,38 +60,41 @@ func (m *Machine) addState() State {
 	return newState
 }
 
-// TODO: сделать корректное добавление буквы - новое состояние и соединяем
-// TODO: подумать больше
-func (m *Machine) addLiteral(currentState int) {
-
+func (m *Machine) addLiteral(currentState State, node *syntax.Regexp) State {
+	for _, symbol := range node.Rune {
+		nextState := m.addState()
+		m.addTransition(currentState, nextState, symbol)
+		currentState = nextState
+	}
+	return currentState
 }
 
 // TODO: сделать корректное добавление конкатенации - просто соединяем состояния
 // TODO: подумать больше
-func (m *Machine) addConcat(currentState int) {
-
+func (m *Machine) addConcat(currentState State, node *syntax.Regexp) State {
+	panic("implement me")
 }
 
 // TODO: сделать корректное добавление альтернативы - еще раз в тетрадь
 // TODO: подумать больше
-func (m *Machine) addAlternate(currentState int) {
-
+func (m *Machine) addAlternate(currentState State, node *syntax.Regexp) State {
+	panic("implement me")
 }
 
 // TODO: сделать корректное добавление звезды клини - еще раз нарисовать в тетради
 // TODO: подумать больше
-func (m *Machine) addStar(currentState int) {
-
+func (m *Machine) addStar(currentState State, node *syntax.Regexp) State {
+	panic("implement me")
 }
 
 // TODO: сделать корректное добавление захвата - просто провалиться вниз
 // TODO: подумать больше
-func (m *Machine) addCapture(currentState int) {
-
+func (m *Machine) addCapture(currentState State, node *syntax.Regexp) State {
+	panic("implement me")
 }
 
 // TODO: сделать корректное добавление самой внутренней альтернативы (это если (a|b))
 // TODO: подумать больше
-func (m *Machine) addCharClass(currentState int) {
-
+func (m *Machine) addCharClass(currentState State, node *syntax.Regexp) State {
+	panic("implement me")
 }
