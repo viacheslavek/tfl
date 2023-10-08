@@ -40,7 +40,7 @@ func (m *Machine) toDOT() string {
 	dot += fmt.Sprintf("\t%d [shape=\"point\"];\n", m.StartState)
 
 	for _, state := range m.FinalStates {
-		dot += fmt.Sprintf("\t%d [shape=\"circle\"];\n", state)
+		dot += fmt.Sprintf("\t%d [shape=\"doublecircle\"];\n", state)
 	}
 
 	for fromState, transitions := range m.Transitions {

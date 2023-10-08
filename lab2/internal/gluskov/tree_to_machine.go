@@ -28,7 +28,7 @@ func BuildMachine(st *syntax.Regexp) *Machine {
 	return machine
 }
 
-func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal bool) State {
+func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal bool) []State {
 	switch node.Op {
 	case syntax.OpLiteral:
 		return m.handleLiteral(currentState, node, isFinal)
@@ -36,9 +36,7 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 		// TODO: реализовать
 		return m.handleConcat(currentState, node, isFinal)
 	case syntax.OpAlternate:
-		// TODO: надо понять
-		// Так как альтернатива может быт либо финальной, либо вызывать из concat,
-		// тогда здесь ее можно не обрабатывать
+		// TODO: реализовать
 		states := m.handleAlternate(currentState, node, isFinal)
 		fmt.Println(states)
 	case syntax.OpStar:
@@ -51,7 +49,7 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 		return m.handleCharClass(currentState, node)
 	}
 	fmt.Println("вышли за case")
-	return currentState
+	return []State{currentState}
 }
 
 func (m *Machine) addTransition(fromState, toState State, symbol rune) {
@@ -71,7 +69,7 @@ func (m *Machine) addFinal(s State) {
 	m.FinalStates = append(m.FinalStates, s)
 }
 
-func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal bool) State {
+func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal bool) []State {
 	for _, symbol := range node.Rune {
 		nextState := m.addState()
 		m.addTransition(currentState, nextState, symbol)
@@ -80,12 +78,11 @@ func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal
 	if isFinal {
 		m.addFinal(currentState)
 	}
-	return currentState
+	return []State{currentState}
 }
 
-// TODO: сделать корректное добавление конкатенации
-// TODO: подумать больше, ведь это вообще главное связующее
-func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal bool) State {
+// TODO: левая часть с false, правая часть с true как final
+func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal bool) []State {
 
 	panic("implement me")
 }
@@ -96,18 +93,18 @@ func (m *Machine) handleAlternate(currentState State, node *syntax.Regexp, isFin
 	rightState := m.handleRegex(node.Sub[1], currentState, isFinal)
 
 	if isFinal {
-		m.addFinal(leftState)
-		m.addFinal(rightState)
+		m.addFinal(leftState[0])
+		m.addFinal(rightState[0])
 	}
-	return []State{leftState, rightState}
+	return []State{leftState[0], rightState[0]}
 }
 
 // TODO: сделать корректное добавление звезды клини
-func (m *Machine) handleStar(currentState State, node *syntax.Regexp) State {
+func (m *Machine) handleStar(currentState State, node *syntax.Regexp) []State {
 	panic("implement me")
 }
 
-func (m *Machine) handleCapture(currentState State, node *syntax.Regexp, isFinal bool) State {
+func (m *Machine) handleCapture(currentState State, node *syntax.Regexp, isFinal bool) []State {
 	if len(node.Sub) != 1 {
 		panic("Длина node.Sub в захвате не равна 1 -> такой случай я не рассматривал")
 	}
@@ -115,6 +112,6 @@ func (m *Machine) handleCapture(currentState State, node *syntax.Regexp, isFinal
 }
 
 // TODO: Здесь все не сложно, как с обычной альтернативой
-func (m *Machine) handleCharClass(currentState State, node *syntax.Regexp) State {
+func (m *Machine) handleCharClass(currentState State, node *syntax.Regexp) []State {
 	panic("implement me")
 }
