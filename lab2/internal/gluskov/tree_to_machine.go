@@ -37,16 +37,13 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 	case syntax.OpAlternate:
 		return m.handleAlternate(currentState, node, isFinal)
 	case syntax.OpStar:
-		// TODO: реализовать
-		return m.handleStar(currentState, node)
+		return m.handleStar(currentState, node, isFinal)
 	case syntax.OpCapture:
 		return m.handleCapture(currentState, node, isFinal)
 	case syntax.OpCharClass:
-		// TODO: реализовать
-		return m.handleCharClass(currentState, node)
+		return m.handleCharClass(currentState, node, isFinal)
 	}
-	fmt.Println("вышли за case")
-	fmt.Println("вот кто вышел:", node.Op)
+	fmt.Println("вот кто вышел за case:", node.Op)
 	return []State{currentState}
 }
 
@@ -67,11 +64,14 @@ func (m *Machine) addFinal(s State) {
 	m.FinalStates = append(m.FinalStates, s)
 }
 
-func (m *Machine) getRuneBetweenStates(left, right State) rune {
+func (m *Machine) getRuneBetweenStates(left, right State) (rune, State) {
+	if right == 0 {
+		return 'я', 0
+	}
 	for r, states := range m.Transitions[left] {
 		for _, s := range states {
 			if s == right {
-				return r
+				return r, s
 			}
 		}
 	}
@@ -94,10 +94,10 @@ func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal 
 	leftState := m.handleRegex(node.Sub[0], currentState, false)
 	rightState := m.handleRegex(node.Sub[1], leftState[0], isFinal)
 
-	r := m.getRuneBetweenStates(leftState[0], rightState[0])
+	transition, newRight := m.getRuneBetweenStates(leftState[0], rightState[0])
 
 	for i := 1; i < len(leftState); i++ {
-		m.addTransition(leftState[i], rightState[0], r)
+		m.addTransition(leftState[i], newRight, transition)
 	}
 
 	return rightState
@@ -114,9 +114,13 @@ func (m *Machine) handleAlternate(currentState State, node *syntax.Regexp, isFin
 	return []State{leftState[0], rightState[0]}
 }
 
-// TODO: сделать корректное добавление звезды клини
-func (m *Machine) handleStar(currentState State, node *syntax.Regexp) []State {
-	panic("implement me")
+func (m *Machine) handleStar(currentState State, node *syntax.Regexp, isFinal bool) []State {
+	endStarState := m.handleRegex(node.Sub[0], currentState, isFinal)
+
+	translations, _ := m.getRuneBetweenStates(currentState, currentState+1)
+
+	m.addTransition(endStarState[0], currentState+1, translations)
+	return endStarState
 }
 
 func (m *Machine) handleCapture(currentState State, node *syntax.Regexp, isFinal bool) []State {
@@ -126,7 +130,16 @@ func (m *Machine) handleCapture(currentState State, node *syntax.Regexp, isFinal
 	return m.handleRegex(node.Sub[0], currentState, isFinal)
 }
 
-// TODO: Здесь все не сложно, как с обычной альтернативой
-func (m *Machine) handleCharClass(currentState State, node *syntax.Regexp) []State {
-	panic("implement me")
+func (m *Machine) handleCharClass(currentState State, node *syntax.Regexp, isFinal bool) []State {
+	leftState := m.addState()
+	m.addTransition(currentState, leftState, node.Rune[0])
+
+	rightState := m.addState()
+	m.addTransition(currentState, rightState, node.Rune[1])
+
+	if isFinal {
+		m.addFinal(leftState)
+		m.addFinal(rightState)
+	}
+	return []State{leftState, rightState}
 }

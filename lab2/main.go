@@ -17,7 +17,7 @@ func main() {
 	//
 	//regex := regexes[0]
 
-	regex := "(ab|bd)c"
+	regex := "(a*b)*"
 
 	_ = parser.ParseRegexInDot(regex)
 
