@@ -4,19 +4,21 @@ import (
 	"regexp/syntax"
 )
 
+type State int
+type StateTransitions map[rune][]State
+
 type Machine struct {
 	StartState   int
 	FinalStates  []int
-	Transitions  map[int]map[rune][]int
+	Transitions  map[State]StateTransitions
 	StateCounter int
 }
 
-// Translate TODO: сделать структуру попонятнее
 func Translate(st *syntax.Regexp) *Machine {
 	machine := &Machine{
 		StartState:   0,
 		FinalStates:  []int{},
-		Transitions:  make(map[int]map[rune][]int),
+		Transitions:  make(map[State]StateTransitions),
 		StateCounter: 1,
 	}
 
@@ -42,12 +44,17 @@ func (m *Machine) buildMachine(node *syntax.Regexp, currentState int) {
 	}
 }
 
-// TODO: сделать попонятнее
-func (m *Machine) addTransition(fromState int, symbol rune, toState int) {
+func (m *Machine) addTransition(fromState, toState State, symbol rune) {
 	if _, exists := m.Transitions[fromState]; !exists {
-		m.Transitions[fromState] = make(map[rune][]int)
+		m.Transitions[fromState] = make(StateTransitions)
 	}
 	m.Transitions[fromState][symbol] = append(m.Transitions[fromState][symbol], toState)
+}
+
+func (m *Machine) addState() State {
+	newState := State(m.StateCounter)
+	m.StateCounter++
+	return newState
 }
 
 // TODO: сделать корректное добавление буквы - новое состояние и соединяем
