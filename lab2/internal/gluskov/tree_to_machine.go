@@ -33,12 +33,9 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 	case syntax.OpLiteral:
 		return m.handleLiteral(currentState, node, isFinal)
 	case syntax.OpConcat:
-		// TODO: реализовать
 		return m.handleConcat(currentState, node, isFinal)
 	case syntax.OpAlternate:
-		// TODO: реализовать
-		states := m.handleAlternate(currentState, node, isFinal)
-		fmt.Println(states)
+		return m.handleAlternate(currentState, node, isFinal)
 	case syntax.OpStar:
 		// TODO: реализовать
 		return m.handleStar(currentState, node)
@@ -49,6 +46,7 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 		return m.handleCharClass(currentState, node)
 	}
 	fmt.Println("вышли за case")
+	fmt.Println("вот кто вышел:", node.Op)
 	return []State{currentState}
 }
 
@@ -69,6 +67,17 @@ func (m *Machine) addFinal(s State) {
 	m.FinalStates = append(m.FinalStates, s)
 }
 
+func (m *Machine) getRuneBetweenStates(left, right State) rune {
+	for r, states := range m.Transitions[left] {
+		for _, s := range states {
+			if s == right {
+				return r
+			}
+		}
+	}
+	return m.getRuneBetweenStates(left, right-1)
+}
+
 func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal bool) []State {
 	for _, symbol := range node.Rune {
 		nextState := m.addState()
@@ -81,14 +90,20 @@ func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal
 	return []State{currentState}
 }
 
-// TODO: левая часть с false, правая часть с true как final
 func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal bool) []State {
+	leftState := m.handleRegex(node.Sub[0], currentState, false)
+	rightState := m.handleRegex(node.Sub[1], leftState[0], isFinal)
 
-	panic("implement me")
+	r := m.getRuneBetweenStates(leftState[0], rightState[0])
+
+	for i := 1; i < len(leftState); i++ {
+		m.addTransition(leftState[i], rightState[0], r)
+	}
+
+	return rightState
 }
 
 func (m *Machine) handleAlternate(currentState State, node *syntax.Regexp, isFinal bool) []State {
-	fmt.Println("alterNode", node)
 	leftState := m.handleRegex(node.Sub[0], currentState, isFinal)
 	rightState := m.handleRegex(node.Sub[1], currentState, isFinal)
 
