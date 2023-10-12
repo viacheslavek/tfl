@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/bfs"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/gluskov"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/parser"
 )
@@ -17,7 +18,7 @@ func main() {
 	//
 	//regex := regexes[0]
 
-	regex := "(a*b)*"
+	regex := "(a(abc)*)b*"
 
 	_ = parser.ParseRegexInDot(regex)
 
@@ -35,5 +36,9 @@ func main() {
 	}
 
 	fmt.Printf("%+v\n", automaton)
+
+	ans := bfs.FindCycles(*automaton)
+
+	fmt.Println("cycle", ans)
 
 }

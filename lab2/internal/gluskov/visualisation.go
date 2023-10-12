@@ -37,7 +37,8 @@ func (m *Machine) toDOT() string {
 	dot := "digraph Automaton {\n"
 	dot += "\trankdir=LR;\n"
 
-	dot += fmt.Sprintf("\t%d [shape=\"point\"];\n", m.StartState)
+	dot += fmt.Sprintf("\t%d -> %d;\n", -1, m.StartState)
+	dot += fmt.Sprintf("\t%d [shape=\"point\"];\n", -1)
 
 	for _, state := range m.FinalStates {
 		dot += fmt.Sprintf("\t%d [shape=\"doublecircle\"];\n", state)

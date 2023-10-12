@@ -91,6 +91,7 @@ func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal
 }
 
 func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal bool) []State {
+
 	leftState := m.handleRegex(node.Sub[0], currentState, false)
 	rightState := m.handleRegex(node.Sub[1], leftState[0], isFinal)
 
@@ -119,7 +120,7 @@ func (m *Machine) handleStar(currentState State, node *syntax.Regexp, isFinal bo
 
 	translations, _ := m.getRuneBetweenStates(currentState, currentState+1)
 
-	m.addTransition(endStarState[0], currentState+1, translations)
+	m.addTransition(endStarState[0], currentState, translations)
 	return endStarState
 }
 
