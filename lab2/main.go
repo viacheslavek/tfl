@@ -2,23 +2,25 @@ package main
 
 import (
 	"fmt"
-	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/bfs"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/wordgen"
+
 	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/gluskov"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/loop"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/parser"
 )
 
 func main() {
 	fmt.Println("start")
 
-	//regGenerator, _ := reggen.New(1, 5, 3, 15)
-	//
+	// TODO: сканирую параметры для генерации регулярок
+	// переношу в reggen.New()
+	//regGenerator, _ := reggen.New(3, 5, 3, 15)
 	//regexes := regGenerator.Generate()
 	//
-	//fmt.Println("regex:", regexes[0])
-	//
-	//regex := regexes[0]
 
 	regex := "(a(abc)*)b*"
+
+	// TODO: можно сканировать параметры для генерации слов в регулярках (максимальное число накачки и число слов)
 
 	_ = parser.ParseRegexInDot(regex)
 
@@ -35,10 +37,12 @@ func main() {
 		fmt.Println("беда с визуализацией автомата", err)
 	}
 
-	fmt.Printf("%+v\n", automaton)
+	loops := loop.FindCycles(automaton)
+	letterLoop := loop.TranslateLoops(loops, automaton)
+	fmt.Printf("letter loop: %+v\n", letterLoop)
 
-	ans := bfs.FindCycles(*automaton)
+	org := wordgen.New(regex, 10, 5)
 
-	fmt.Println("cycle", ans)
+	org.DfsBuildWord(automaton, letterLoop)
 
 }
