@@ -63,9 +63,9 @@ func (dp *dfsParam) dfsFinderLoop(currentState gluskov.State) {
 type StateLoopToString map[gluskov.State][]LetterLoop
 
 type LetterLoop struct {
-	secondState gluskov.State
-	finalState  gluskov.State
-	alpLoop     string
+	SecondState gluskov.State
+	FinalState  gluskov.State
+	AlpLoop     string
 }
 
 func TranslateLoops(s [][]gluskov.State, m *gluskov.Machine) StateLoopToString {
@@ -85,13 +85,13 @@ func TranslateLoops(s [][]gluskov.State, m *gluskov.Machine) StateLoopToString {
 func newLetterLoop(s []gluskov.State) LetterLoop {
 	if len(s) > 1 {
 		return LetterLoop{
-			secondState: s[1],
-			finalState:  s[len(s)-1],
+			SecondState: s[1],
+			FinalState:  s[len(s)-1],
 		}
 	}
 	return LetterLoop{
-		secondState: s[0],
-		finalState:  s[len(s)-1],
+		SecondState: s[0],
+		FinalState:  s[len(s)-1],
 	}
 }
 
@@ -102,7 +102,7 @@ func translateLoop(s []gluskov.State, m *gluskov.Machine) LetterLoop {
 		current := s[i]
 		next := s[i+1]
 		letter, _ := m.GetRuneBetweenStates(current, next)
-		letterLoop.alpLoop += string(letter)
+		letterLoop.AlpLoop += string(letter)
 	}
 
 	return letterLoop
