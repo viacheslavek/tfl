@@ -2,30 +2,27 @@ package main
 
 import (
 	"fmt"
-	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/wordgen"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/benchmark"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab2/internal/reggen"
 )
+
+const (
+	rustBinaryPath = "/Users/slavaruswarrior/Documents/GitHub/BMSTU-Formal-Languages/rust/target/release/lab2"
+	countWords     = 10
+	maxDumpSize    = 5
+)
+
+// TODO: можно сделать красивый логер для всего этого
+// и это было бы приятным дополнением
 
 func main() {
 	fmt.Println("start")
 
 	// TODO: сканирую параметры для генерации регулярок
-	// переношу в reggen.New()
-	//regGenerator, _ := reggen.New(3, 5, 3, 15)
-	//regexes := regGenerator.Generate()
-	//
+	regGenerator, _ := reggen.New(10, 5, 4, 30)
 
-	regex := "((a(abc)*)b*)(c)******"
-
-	// TODO: можно сканировать параметры для генерации слов в регулярках (максимальное число накачки и число слов)
-
-	words, err := wordgen.GenerateWordsForRegex(regex, 15, 5)
+	err := benchmark.Start(regGenerator, rustBinaryPath, countWords, maxDumpSize)
 	if err != nil {
-		fmt.Println("беда в генерации слов")
+		fmt.Println("ОШИБКА", err)
 	}
-
-	fmt.Println("words")
-	for i, w := range words {
-		fmt.Println(i+1, ":", w)
-	}
-
 }
