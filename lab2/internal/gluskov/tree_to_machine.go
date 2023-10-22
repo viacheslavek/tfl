@@ -38,7 +38,7 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 	case syntax.OpLiteral:
 		return m.handleLiteral(currentState, node, isFinal)
 	case syntax.OpConcat:
-		return m.handleConcat(currentState, node, isFinal)
+		return m.handleConcatMulti(currentState, node, isFinal)
 	case syntax.OpAlternate:
 		return m.handleAlternate(currentState, node, isFinal)
 	case syntax.OpStar:
@@ -106,13 +106,23 @@ func (m *Machine) handleAlternate(currentState State, node *syntax.Regexp, isFin
 	return []State{leftState[0], rightState[0]}
 }
 
-func (m *Machine) handleConcat(currentState State, node *syntax.Regexp, isFinal bool) []State {
+func (m *Machine) handleConcatMulti(currentState State, node *syntax.Regexp, isFinal bool) []State {
 
-	leftState := m.handleRegex(node.Sub[0], currentState, false)
+	beforeState := m.handleRegex(node.Sub[0], currentState, false)
 
+	nextState := make([]State, 0)
+	for i := 1; i < len(node.Sub); i++ {
+		nextState = m.concatRange(beforeState, node.Sub[i], isFinal)
+		beforeState = nextState
+	}
+
+	return nextState
+}
+
+func (m *Machine) concatRange(leftState []State, node *syntax.Regexp, isFinal bool) []State {
 	currentTransitionsBefore := getNewStateTransitionsObject(m.Transitions[leftState[0]])
 
-	rightState := m.handleRegex(node.Sub[1], leftState[0], isFinal)
+	rightState := m.handleRegex(node, leftState[0], isFinal)
 	currentTransitionsAfter := getNewStateTransitionsObject(m.Transitions[leftState[0]])
 
 	newTransitions, err := getLetterTransitionAndNextState(currentTransitionsBefore, currentTransitionsAfter)
