@@ -63,6 +63,11 @@ func Start(reg *reggen.Regexes, rustBinaryPath string, countWords, maxDumpSize i
 		return err
 	}
 
+	words, err = wordgen.GenerateWordsForBenchmarkRegexes(words)
+	if err != nil {
+		return err
+	}
+
 	pErr := runBenchmarksInPython(words)
 	if pErr != nil {
 		return fmt.Errorf("failed at bench start python comparassion %w", pErr)

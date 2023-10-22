@@ -13,7 +13,6 @@ const (
 )
 
 // TODO: можно сделать красивый логер для всего этого
-// TODO: поменять в эквивалентности генерацию слов без последней буквы
 
 func main() {
 	var simplifierPath string
@@ -39,7 +38,7 @@ func main() {
 
 	regGenerator, _ := reggen.New(countRegex, alphabetSize, starHeight, letterCount)
 
-	eErr := benchmark.EquivalenceCheck(regGenerator, simplifierPath, 0, 10)
+	eErr := benchmark.EquivalenceCheck(regGenerator, simplifierPath, 5, 10)
 	if eErr != nil {
 		panic("error: " + eErr.Error())
 	}
