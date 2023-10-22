@@ -69,7 +69,7 @@ func GenerateWordsForRegex(regex string, countWords, maxDumpSize int) (*RegexesW
 		return nil, fmt.Errorf("can't parse regex: %w", pErr)
 	}
 
-	automaton := gluskov.BuildMachine(tree)
+	automaton := gluskov.BuildMachine(tree, regex)
 
 	// Визуализация автомата
 	//err := automaton.GetDotMachine()

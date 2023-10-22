@@ -42,7 +42,7 @@ func compareRegexWithWords(rwws []wordgen.RegexesWithWords) {
 
 func runWords(rww wordgen.RegexesWithWords) {
 	for _, word := range rww.Words {
-		if !equalMatched(rww.RegexBefore, rww.RegexAfter, word) {
+		if !equalMatched("^"+rww.RegexBefore+"$", "^"+rww.RegexAfter+"$", word) {
 			fmt.Printf("Don`t equal in word: %s\n", word)
 		} else {
 			fmt.Printf("OK in: %s\n", word)
