@@ -47,5 +47,4 @@ func main() {
 	if err != nil {
 		panic("error: " + err.Error())
 	}
-
 }

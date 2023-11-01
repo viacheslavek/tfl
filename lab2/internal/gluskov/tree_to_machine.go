@@ -38,7 +38,7 @@ func (m *Machine) handleRegex(node *syntax.Regexp, currentState State, isFinal b
 	case syntax.OpLiteral:
 		return m.handleLiteral(currentState, node, isFinal)
 	case syntax.OpConcat:
-		return m.handleConcatMulti(currentState, node, isFinal)
+		return m.handleConcatMulti(currentState, node)
 	case syntax.OpAlternate:
 		return m.handleAlternate(currentState, node, isFinal)
 	case syntax.OpStar:
@@ -69,20 +69,6 @@ func (m *Machine) addFinal(s State) {
 	m.FinalStates[s] = struct{}{}
 }
 
-func (m *Machine) GetRuneBetweenStates(left, right State) (rune, State) {
-	if right == 0 {
-		return 'я', 0
-	}
-	for r, states := range m.Transitions[left] {
-		for _, s := range states {
-			if s == right {
-				return r, s
-			}
-		}
-	}
-	return m.GetRuneBetweenStates(left, right-1)
-}
-
 func (m *Machine) handleLiteral(currentState State, node *syntax.Regexp, isFinal bool) []State {
 	for _, symbol := range node.Rune {
 		nextState := m.addState()
@@ -106,13 +92,13 @@ func (m *Machine) handleAlternate(currentState State, node *syntax.Regexp, isFin
 	return []State{leftState[0], rightState[0]}
 }
 
-func (m *Machine) handleConcatMulti(currentState State, node *syntax.Regexp, isFinal bool) []State {
+func (m *Machine) handleConcatMulti(currentState State, node *syntax.Regexp) []State {
 
 	beforeState := m.handleRegex(node.Sub[0], currentState, false)
 
 	nextState := make([]State, 0)
 	for i := 1; i < len(node.Sub); i++ {
-		nextState = m.concatRange(beforeState, node.Sub[i], isFinal)
+		nextState = m.concatRange(beforeState, node.Sub[i], false)
 		beforeState = nextState
 	}
 

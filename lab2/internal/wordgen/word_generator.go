@@ -101,7 +101,7 @@ func GenerateWordsForRegex(regex string, countWords, maxDumpSize int) (*RegexesW
 	//}
 
 	loops := loop.FindCycles(automaton)
-	letterLoop := loop.TranslateLoops(loops, automaton)
+	letterLoop := loop.TranslateLoops(loops)
 
 	org := New(regex, countWords, maxDumpSize, automaton, letterLoop)
 
