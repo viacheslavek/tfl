@@ -8,8 +8,10 @@ import (
 )
 
 const (
-	countWords  = 100
-	maxDumpSize = 200
+	benchCountWords        = 100
+	benchMaxDumpSize       = 200
+	equivalenceCountWords  = 10
+	equivalenceMaxDumpSize = 5
 )
 
 // TODO: можно сделать красивый логер для всего этого
@@ -38,13 +40,12 @@ func main() {
 
 	regGenerator, _ := reggen.New(countRegex, alphabetSize, starHeight, letterCount)
 
-	eErr := benchmark.EquivalenceCheck(regGenerator, simplifierPath, 5, 10)
-	if eErr != nil {
-		panic("error: " + eErr.Error())
+	sErr := benchmark.Start(regGenerator, simplifierPath,
+		benchCountWords, benchMaxDumpSize,
+		equivalenceCountWords, equivalenceMaxDumpSize,
+	)
+	if sErr != nil {
+		panic("error: " + sErr.Error())
 	}
 
-	err := benchmark.Start(regGenerator, simplifierPath, countWords, maxDumpSize)
-	if err != nil {
-		panic("error: " + err.Error())
-	}
 }

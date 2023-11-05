@@ -21,8 +21,27 @@ var (
 	pythonScriptPath = basepath + "/regular_compression.py"
 )
 
-func EquivalenceCheck(reg *reggen.Regexes, rustBinaryPath string, countWords, maxDumpSize int) error {
-	words, err := prepareEnvironment(reg, rustBinaryPath, countWords, maxDumpSize)
+func Start(reg *reggen.Regexes, rustBinaryPath string,
+	benchCountWords, benchMaxDumpSize int,
+	equivalenceCountWords, equivalenceMaxDumpSize int,
+) error {
+	regexes := reg.Generate()
+
+	eErr := equivalenceCheck(regexes, rustBinaryPath, equivalenceCountWords, equivalenceMaxDumpSize)
+	if eErr != nil {
+		return fmt.Errorf("failed equivalence check %w", eErr)
+	}
+
+	bErr := benchmarkCheck(regexes, rustBinaryPath, benchCountWords, benchMaxDumpSize)
+	if bErr != nil {
+		return fmt.Errorf("failed benchmark check %w", bErr)
+	}
+
+	return nil
+}
+
+func equivalenceCheck(regexes []string, rustBinaryPath string, countWords, maxDumpSize int) error {
+	words, err := prepareEnvironment(regexes, rustBinaryPath, countWords, maxDumpSize)
 	if err != nil {
 		return err
 	}
@@ -33,7 +52,6 @@ func EquivalenceCheck(reg *reggen.Regexes, rustBinaryPath string, countWords, ma
 }
 
 func compareRegexWithWords(rwws []wordgen.RegexesWithWords) {
-
 	for _, rww := range rwws {
 		fmt.Printf("compare expected: %s regular with actual: %s\n", rww.RegexBefore, rww.RegexAfter)
 		runWords(rww)
@@ -56,13 +74,13 @@ func equalMatched(p1, p2, word string) bool {
 	return beforeMatched == afterMatched
 }
 
-func Start(reg *reggen.Regexes, rustBinaryPath string, countWords, maxDumpSize int) error {
-
-	words, err := prepareEnvironment(reg, rustBinaryPath, countWords, maxDumpSize)
+func benchmarkCheck(regexes []string, rustBinaryPath string, countWords, maxDumpSize int) error {
+	words, err := prepareEnvironment(regexes, rustBinaryPath, countWords, maxDumpSize)
 	if err != nil {
 		return err
 	}
 
+	// Тут я добавляю 'Z' к каждому слову в words
 	words, err = wordgen.GenerateWordsForBenchmarkRegexes(words)
 	if err != nil {
 		return err
@@ -76,14 +94,8 @@ func Start(reg *reggen.Regexes, rustBinaryPath string, countWords, maxDumpSize i
 }
 
 func prepareEnvironment(
-	reg *reggen.Regexes, rustBinaryPath string, countWords, maxDumpSize int,
+	regexes []string, rustBinaryPath string, countWords, maxDumpSize int,
 ) ([]wordgen.RegexesWithWords, error) {
-
-	regexes := reg.Generate()
-
-	fmt.Println("started generating...")
-
-	fmt.Println("regexes", regexes)
 
 	words, gErr := wordgen.GenerateWordsForRegexes(regexes, countWords, maxDumpSize)
 	if gErr != nil {
