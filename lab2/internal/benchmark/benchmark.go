@@ -2,7 +2,9 @@ package benchmark
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,7 +55,7 @@ func equivalenceCheck(regexes []string, rustBinaryPath string, countWords, maxDu
 
 func compareRegexWithWords(rwws []wordgen.RegexesWithWords) {
 	for _, rww := range rwws {
-		fmt.Printf("compare expected: %s regular with actual: %s\n", rww.RegexBefore, rww.RegexAfter)
+		log.Printf("compare expected: %s regular with actual: %s\n", rww.RegexBefore, rww.RegexAfter)
 		runWords(rww)
 	}
 }
@@ -61,9 +63,9 @@ func compareRegexWithWords(rwws []wordgen.RegexesWithWords) {
 func runWords(rww wordgen.RegexesWithWords) {
 	for _, word := range rww.Words {
 		if !equalMatched("^"+rww.RegexBefore+"$", "^"+rww.RegexAfter+"$", word) {
-			fmt.Printf("Don`t equal in word: %s\n", word)
+			log.Printf("Don`t equal in word: %s\n", word)
 		} else {
-			fmt.Printf("OK in: %s\n", word)
+			log.Printf("OK in: %s\n", word)
 		}
 	}
 }
@@ -165,16 +167,15 @@ func runPythonScriptForPairRegexes(wordsWithRegex wordgen.RegexesWithWords) erro
 		return fmt.Errorf("failed to run after regexp %w", afterErr)
 	}
 
-	fmt.Printf(
+	log.Printf(
 		"\tto before: regex: %s, status: %s, duration: %s\n",
 		wordsWithRegex.RegexBefore, okBefore, durBefore,
 	)
-	fmt.Printf(
+	log.Printf(
 		"\tto after: regex: %s, status: %s, duration: %s\n",
 		wordsWithRegex.RegexAfter, okAfter, durAfter,
 	)
-
-	fmt.Println("_______________________")
+	log.Println("_______________________")
 
 	return nil
 }
@@ -203,15 +204,14 @@ func runPythonScriptForOneRegex(regexp string, words []string) (*time.Duration, 
 		if cmd.Process != nil {
 			err := cmd.Process.Kill()
 			if err != nil {
-				fmt.Println("failed to kill process")
+				log.Println("failed to kill process")
 			}
 		}
 	}()
 
 	if err := cmd.Wait(); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			return nil, "", fmt.Errorf("failed to wait script %s", string(exitErr.Stderr))
-		} else {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
 			return nil, "", fmt.Errorf("failed to wait script %s", string(exitErr.Stderr))
 		}
 	}

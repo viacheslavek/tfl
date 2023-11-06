@@ -14,8 +14,6 @@ const (
 	equivalenceMaxDumpSize = 5
 )
 
-// TODO: можно сделать красивый логер для всего этого
-
 func main() {
 	var simplifierPath string
 	var countRegex, alphabetSize, starHeight, letterCount int
