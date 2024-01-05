@@ -3,19 +3,24 @@ package main
 import (
 	"fmt"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab3/tables"
 )
 
 func main() {
 	fmt.Println("Hello")
-	firstOracle := oracle.NewRegularOracle("aba*", []byte{'a', 'b'})
+	alphabet := []byte{'a', 'b'}
+	firstOracle := oracle.NewRegularOracle("aba*", alphabet)
 
 	fmt.Println(firstOracle.BelongLanguage("ab"))
-	fmt.Println(firstOracle.BelongLanguage("aba"))
-	fmt.Println(firstOracle.BelongLanguage("abaa"))
-	fmt.Println(firstOracle.BelongLanguage("abaaaa"))
-	fmt.Println(firstOracle.BelongLanguage("abaaaaa"))
-	fmt.Println(firstOracle.BelongLanguage("abbb"))
 	fmt.Println(firstOracle.BelongLanguage("abb"))
+
+	angluin := tables.New(firstOracle)
+
+	fmt.Printf("simple angluin %+v\n", angluin)
+
+	angluin.Run()
+
+	fmt.Println("SUCCESS")
 
 }
 
