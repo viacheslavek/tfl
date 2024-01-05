@@ -37,34 +37,83 @@ func New(o oracle.Oracle) *Angluin {
 func (a *Angluin) Run() {
 	fmt.Println("in RUN")
 
-	fmt.Println(a.table)
-	a.PrintTable()
-	a.addPrefix("a")
-	a.updateTableByPrefix("a")
-	a.addPrefix("aa")
-	fmt.Println(a.table)
-	a.PrintTable()
-	a.updateTableByPrefix("aa")
-	fmt.Println(a.table)
+	a.AddPrefix("a")
+	a.AddPrefix("aa")
 	a.PrintTable()
 
-	a.addSuffix("b")
-	a.updateTableBySuffix("b")
-	fmt.Println(a.table)
+	a.AddSuffix("b")
 	a.PrintTable()
-	a.addSuffix("bb")
-	a.updateTableBySuffix("bb")
-	fmt.Println(a.table)
+
+	a.AddSuffix("ba")
 	a.PrintTable()
+
+	a.AddExtendPrefix("a")
+	a.AddSuffix("aaa")
+
+	a.PrintPrefix()
+	a.PrintSuffix()
+	a.PrintExtendPrefix()
+	a.PrintTable()
+	a.PrintExtendTable()
 
 	fmt.Println("end in run")
 }
 
-// TODO: проверяю полноту как в презе
-func (a *Angluin) closed() {
+// INFO:Closed: An observation table is called closed if for all t in S.A there exist an s’ in S
+// such that row(s’)=row(t).This states that every row(s.a) must be present in row(s).
+// Если полна, то вернется пустая строка, если нет, то префикс
+func (a *Angluin) closed() string {
 
+	suffixList := sortSet(a.suffix)
+	tempTableRowMap := a.createTempTableRowMap(suffixList)
+	extendPrefixList := sortSet(a.extendPrefix)
+	for _, ep := range extendPrefixList {
+		if _, ok := tempTableRowMap[a.getExtendTableRow(ep, suffixList)]; !ok {
+			return ep
+		}
+	}
+
+	return ""
 }
 
+func (a *Angluin) createTempTableRowMap(suffixList []string) map[string]struct{} {
+	tempTableRowMap := make(map[string]struct{})
+
+	for p := range a.prefix {
+		tempTableRowMap[a.getTableRow(p, suffixList)] = struct{}{}
+	}
+
+	return tempTableRowMap
+}
+
+func (a *Angluin) getTableRow(prefix string, suffixList []string) string {
+	row := ""
+	for _, s := range suffixList {
+		val := a.table[createTableKey(prefix, s)]
+		if val {
+			row += "1"
+		} else {
+			row += "0"
+		}
+	}
+	return row
+}
+
+func (a *Angluin) getExtendTableRow(prefix string, suffixList []string) string {
+	row := ""
+	for _, s := range suffixList {
+		val := a.extendTable[createTableKey(prefix, s)]
+		if val {
+			row += "1"
+		} else {
+			row += "0"
+		}
+	}
+	return row
+}
+
+// INFO: Consistent: An observation table is said to be consistent if, whenever s1,s2 in S satisfy row(s1)=row(s2)
+// then for every a in A it must satisfy row(s1.a)=row(s2.a).
 // TODO: проверяю констистентость как в презе
 func (a *Angluin) consistent() {
 

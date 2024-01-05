@@ -5,27 +5,35 @@ import (
 	"sort"
 )
 
-func (a *Angluin) addSuffix(suffix string) {
+func (a *Angluin) AddSuffix(suffix string) {
 	a.suffix[suffix] = struct{}{}
+
+	a.updateTableBySuffix(suffix)
+	a.updateExtendTableBySuffix(suffix)
 }
 
-func (a *Angluin) addPrefix(prefix string) {
+func (a *Angluin) AddPrefix(prefix string) {
 	for i := 1; i < len(prefix)+1; i++ {
 		a.prefix[prefix[:i]] = struct{}{}
+		a.updateTableByPrefix(prefix[:i])
 	}
+
 }
 
-func (a *Angluin) addExtendPrefix(prefix string) {
+func (a *Angluin) AddExtendPrefix(prefix string) {
 	for _, letter := range a.oracle.GetAlphabet() {
 		newPrefix := prefix + string(letter)
 		a.extendPrefix[newPrefix] = struct{}{}
 		a.deleteAllPrefixesPrefixFromExtendPrefix(newPrefix)
+
+		a.updateExtendTableByAddPrefix(newPrefix)
 	}
 }
 
 func (a *Angluin) deleteAllPrefixesPrefixFromExtendPrefix(extendPrefix string) {
 	for i := 1; i < len(extendPrefix); i++ {
 		delete(a.extendPrefix, extendPrefix[:i])
+		a.updateExtendTableByDeletePrefix(extendPrefix[:i])
 	}
 }
 
@@ -98,24 +106,24 @@ func (a *Angluin) updateExtendTableBySuffix(suffix string) {
 	}
 }
 
+func sortSet(set map[string]struct{}) []string {
+	list := make([]string, 0, len(set))
+	for s := range set {
+		list = append(list, s)
+	}
+	sort.Strings(list)
+	return list
+}
+
 func sortSets(prefixSet, suffixSet map[string]struct{}) ([]string, []string) {
-	suffixList := make([]string, 0, len(suffixSet))
-	prefixList := make([]string, 0, len(prefixSet))
 
-	for s := range suffixSet {
-		suffixList = append(suffixList, s)
-	}
-	sort.Strings(suffixList)
-
-	for p := range prefixSet {
-		prefixList = append(prefixList, p)
-	}
-	sort.Strings(prefixList)
+	suffixList := sortSet(suffixSet)
+	prefixList := sortSet(prefixSet)
 
 	return prefixList, suffixList
 }
 
-func (a *Angluin) printFromLists(prefixList, suffixList []string) {
+func printFromLists(prefixList, suffixList []string, table map[string]bool) {
 	fmt.Printf("%-10s", "lambda")
 
 	for _, s := range suffixList {
@@ -127,7 +135,7 @@ func (a *Angluin) printFromLists(prefixList, suffixList []string) {
 		fmt.Printf("%-10s", p)
 		for _, s := range suffixList {
 			key := createTableKey(p, s)
-			val := a.table[key]
+			val := table[key]
 			if val {
 				fmt.Printf("%-10v", 1)
 			} else {
@@ -143,7 +151,7 @@ func (a *Angluin) PrintTable() {
 
 	prefixList, suffixList := sortSets(a.prefix, a.suffix)
 
-	a.printFromLists(prefixList, suffixList)
+	printFromLists(prefixList, suffixList, a.table)
 }
 
 func (a *Angluin) PrintExtendTable() {
@@ -151,5 +159,5 @@ func (a *Angluin) PrintExtendTable() {
 
 	prefixList, suffixList := sortSets(a.extendPrefix, a.suffix)
 
-	a.printFromLists(prefixList, suffixList)
+	printFromLists(prefixList, suffixList, a.extendTable)
 }
