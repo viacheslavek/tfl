@@ -16,13 +16,16 @@ func (a *Angluin) AddPrefix(prefix string) {
 	for i := 1; i < len(prefix)+1; i++ {
 		a.prefix[prefix[:i]] = struct{}{}
 		a.updateTableByPrefix(prefix[:i])
+
+		a.addExtendPrefix(prefix[:i])
 	}
 
 }
 
-func (a *Angluin) AddExtendPrefix(prefix string) {
+func (a *Angluin) addExtendPrefix(prefix string) {
 	for _, letter := range a.oracle.GetAlphabet() {
 		newPrefix := prefix + string(letter)
+
 		a.extendPrefix[newPrefix] = struct{}{}
 		a.deleteAllPrefixesPrefixFromExtendPrefix(newPrefix)
 

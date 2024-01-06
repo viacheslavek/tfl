@@ -29,9 +29,9 @@ func main() {
 
 	fmt.Println(firstOracle.BelongLanguage("abaaaa"))
 
-	// ho := handsOracle{}
+	ho := handsOracle{}
 
-	angluin := tables.New(firstOracle)
+	angluin := tables.New(ho)
 
 	fmt.Printf("simple angluin %+v\n", angluin)
 

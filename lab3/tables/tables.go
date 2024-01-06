@@ -28,41 +28,53 @@ func New(o oracle.Oracle) *Angluin {
 
 	a.prefix[""] = struct{}{}
 	a.suffix[""] = struct{}{}
+
+	a.addExtendPrefix("")
+
 	return &a
 }
 
 // Run TODO: Это делаю уже в последнюю очередь:
 // Запускаю прогон, если таблица констистента и полна, то кидаю в учителя
 // если все норм, то отдаю автомат, если нет, то c новой строкой повторяю итерацию
+// TODO: перенести этот RUN в тест работы таблицы - оракул - вторая буква с конца - 'b'
 func (a *Angluin) Run() {
 	fmt.Println("in RUN")
 
-	a.AddPrefix("a")
-	a.AddPrefix("aa")
-	a.PrintTable()
-
-	a.AddSuffix("b")
-	a.PrintTable()
-
-	a.AddSuffix("ba")
-	a.PrintTable()
-
-	a.AddExtendPrefix("a")
-	a.AddSuffix("aaa")
-
-	a.PrintPrefix()
-	a.PrintSuffix()
-	a.PrintExtendPrefix()
+	// первый этап - пока все пусто
 	a.PrintTable()
 	a.PrintExtendTable()
+	fmt.Printf("first closed? '%s' -> yes?\n", a.Closed())
+
+	// второй этап - из МАТа приходит 'ba'
+	a.AddPrefix("ba")
+	a.PrintTable()
+	a.PrintExtendTable()
+	fmt.Println("ex:", a.extendTable)
+
+	fmt.Printf("second closed? '%s' -> yes?\n", a.Closed())
+
+	// третий этап - приходит суффикс 'а' из-за неконсистентности
+	a.AddSuffix("a")
+	a.PrintTable()
+	a.PrintExtendTable()
+	fmt.Printf("third closed? '%s' -> no?\n", a.Closed())
+
+	// четвертый этап - из-за не закрытости приходит 'bb'
+	a.AddPrefix("bb")
+	a.PrintTable()
+	a.PrintExtendTable()
+	fmt.Printf("forth closed? '%s' -> yes?\n", a.Closed())
+
+	// после этого можно строить автомат
 
 	fmt.Println("end in run")
 }
 
-// INFO:Closed: An observation table is called closed if for all t in S.A there exist an s’ in S
+// Closed INFO:Closed: An observation table is called closed if for all t in S.A there exist an s’ in S
 // such that row(s’)=row(t).This states that every row(s.a) must be present in row(s).
 // Если полна, то вернется пустая строка, если нет, то префикс
-func (a *Angluin) closed() string {
+func (a *Angluin) Closed() string {
 
 	suffixList := sortSet(a.suffix)
 	tempTableRowMap := a.createTempTableRowMap(suffixList)
@@ -112,9 +124,42 @@ func (a *Angluin) getExtendTableRow(prefix string, suffixList []string) string {
 	return row
 }
 
-// INFO: Consistent: An observation table is said to be consistent if, whenever s1,s2 in S satisfy row(s1)=row(s2)
-// then for every a in A it must satisfy row(s1.a)=row(s2.a).
-// TODO: проверяю констистентость как в презе
-func (a *Angluin) consistent() {
+// Consistent INFO: Consistent: An observation table is said to be consistent if, whenever s1,s2 in S satisfy row(s1)=row(s2)
+// then for every an in A must satisfy row(s1.a)=row(s2.a).
+// Если консистентно, то вернется пустая строка, иначе - буква + суффикс
+func (a *Angluin) Consistent() string {
 
+	tableRowToPrefix := getDsForTableRowToPrefix()
+	extendTableRowToPrefix := getDsForTableRowToPrefix()
+
+	equalTableRowToPrefix := getEqualRowForPrefix(tableRowToPrefix)
+
+	return a.findConsistentForRowInTables(equalTableRowToPrefix, tableRowToPrefix, extendTableRowToPrefix)
+}
+
+// TODO: считаю row для table вида prefix - row
+func getDsForTableRowToPrefix() map[string]string {
+	panic("Implement me")
+}
+
+// TODO: считаю row для extendTable вида prefix - row
+func getDsForExtendTableRowToPrefix() map[string]string {
+	panic("Implement me")
+}
+
+// TODO: в prefix - row нахожу такие пары, что row(prefix1) = row(prefix2)
+// и создаю мапу вида row -> []prefix
+func getEqualRowForPrefix(rowToPrefix map[string]string) map[string][]string {
+	panic("Implement me")
+}
+
+// TODO: для всех row -> []prefix в []prefix попарно сопоставляю с алфавитом
+// и ищу этот newPrefix в table или extendTable
+func (a *Angluin) findConsistentForRowInTables(
+	equalTableRowToPrefix map[string][]string, tableRowToPrefix, extendTableRowToPrefix map[string]string) string {
+
+	// TODO: Если равны, то все норм, если нет, то нахожу различия в row, нахожу тем самым суффикс.
+	//  Возвращаю букву алфавита + суффикс
+
+	return ""
 }
