@@ -3,20 +3,27 @@ package mat
 import (
 	"log"
 
+	"github.com/VyacheslavIsWorkingNow/tfl/lab3/automaton"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
 )
 
 // Генератор получился отличный!
 
+// MAT INFO: сгенерировать слова - трудоемкий процесс, при этом это всегда один набор слов (я решил так сделать),
+// так что генерирую я слова один раз при инициализации - поэтому в начале может немного просесть программа
 type MAT struct {
 	oracle      oracle.Oracle
 	maxLenWords int
+	words       []string
 }
 
 func New(o oracle.Oracle, maxLenWords int) *MAT {
+	log.Println("Generating words...")
+	words := generateCombinations(o.GetAlphabet(), maxLenWords)
+	log.Println("Generating words success")
 	return &MAT{
-		oracle:      o,
-		maxLenWords: maxLenWords,
+		oracle: o,
+		words:  words,
 	}
 }
 
@@ -61,10 +68,14 @@ func (mat *MAT) Membership(word string) bool {
 	return mat.oracle.BelongLanguage(word)
 }
 
-// Equivalence TODO: Когда напишу перевод в автомат, то здесь на вход принимаю автомат, генерирую слова
-//
-//	и эти слова даю на вход автомату и оракулу, если со всеми словами все хорошо - отлично, если нет - выдаю слово
-func (mat *MAT) Equivalence() (bool, string) {
+func (mat *MAT) Equivalence(m *automaton.Machine) (bool, string) {
+
+	for _, word := range mat.words {
+		if m.Membership(word) != mat.Membership(word) {
+			return false, word
+		}
+	}
+
 	return true, ""
 }
 

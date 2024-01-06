@@ -1,9 +1,12 @@
 package tables
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"time"
 
+	"github.com/VyacheslavIsWorkingNow/tfl/lab3/automaton"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/mat"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
 )
@@ -37,35 +40,41 @@ func New(o oracle.Oracle, maxLenWords int) *Angluin {
 	return &a
 }
 
-func (a *Angluin) Run() {
+func (a *Angluin) Run() *automaton.Machine {
 	log.Println("start RUN")
 
-dfaLoop:
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
 	for {
-		a.PrintPrefix()
-		a.PrintSuffix()
-		a.PrintExtendPrefix()
-		a.PrintTable()
-		a.PrintExtendTable()
-		var closed, consistent string
-		closed = a.Closed()
-		consistent = a.Consistent()
-		if closed == "" && consistent == "" {
-			// TODO: make DFA
-			ok, newPrefix := a.mat.Equivalence()
-			if ok {
-				// TODO: возвращаю автомат
-				break dfaLoop
+		select {
+		case <-ctx.Done():
+			log.Println("Execution time exceeded")
+			return nil
+		default:
+			a.PrintPrefix()
+			a.PrintSuffix()
+			a.PrintExtendPrefix()
+			a.PrintTable()
+			a.PrintExtendTable()
+			var closed, consistent string
+			closed = a.Closed()
+			consistent = a.Consistent()
+			if closed == "" && consistent == "" {
+				m := automaton.New()
+				m.Translate(a.suffix, a.prefix, a.table)
+				ok, newPrefix := a.mat.Equivalence(m)
+				if ok {
+					return m
+				}
+				a.AddPrefix(newPrefix)
+			} else if closed != "" {
+				a.AddPrefix(closed)
+			} else {
+				a.AddSuffix(consistent)
 			}
-			a.AddPrefix(newPrefix)
-		} else if closed != "" {
-			a.AddPrefix(closed)
-		} else {
-			a.AddSuffix(consistent)
 		}
 	}
-
-	log.Println("finish run")
 }
 
 // Closed INFO: Closed: An observation table is called closed if for all t in S.A there exist an s` in S
