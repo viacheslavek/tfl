@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/tables"
 )
@@ -40,5 +41,3 @@ func main() {
 	fmt.Println("SUCCESS")
 
 }
-
-// TODO: в tables два файла для работы с разными таблицами
