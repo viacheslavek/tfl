@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/VyacheslavIsWorkingNow/tfl/lab3/mat"
+	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
 )
 
 type handsOracle struct{}
@@ -18,20 +21,21 @@ func (ho handsOracle) GetAlphabet() []byte {
 }
 
 func main() {
-	//alphabet := []byte{'a', 'b'}
-	//firstOracle := oracle.NewRegularOracle("aba*", alphabet)
-	//
-	//fmt.Println(firstOracle.BelongLanguage("ab"))
-	//fmt.Println(firstOracle.BelongLanguage("abb"))
-	//
-	//fmt.Println(firstOracle.BelongLanguage("abaaaa"))
-	//
+	alphabet := []byte{'a', 'b'}
+	firstOracle := oracle.NewRegularOracle("aba*", alphabet)
+
 	//ho := handsOracle{}
 	//
-	//angluin := tables.New(ho)
+	//angluin := tables.New(ho, 4)
 	//
 	//fmt.Printf("simple angluin %+v\n", angluin)
-	// angluin.Run()
+	//angluin.Run()
+
+	m := mat.New(firstOracle, 4)
+
+	words := m.GenerateWords()
+
+	fmt.Println("words:", words)
 
 	fmt.Println("SUCCESS")
 

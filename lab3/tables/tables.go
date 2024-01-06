@@ -14,20 +14,20 @@ type Angluin struct {
 	extendPrefix map[string]struct{}
 	table        map[string]bool
 	extendTable  map[string]bool
-	oracle       oracle.Oracle
+	mat          mat.MAT
 }
 
-func New(o oracle.Oracle) *Angluin {
+func New(o oracle.Oracle, maxLenWords int) *Angluin {
 	a := Angluin{
 		suffix:       make(map[string]struct{}),
 		prefix:       make(map[string]struct{}),
 		extendPrefix: make(map[string]struct{}),
 		table:        make(map[string]bool),
 		extendTable:  make(map[string]bool),
-		oracle:       o,
+		mat:          *mat.New(o, maxLenWords),
 	}
 
-	a.table["_"] = a.oracle.BelongLanguage("")
+	a.table["_"] = a.mat.Membership("")
 
 	a.prefix[""] = struct{}{}
 	a.suffix[""] = struct{}{}
@@ -52,8 +52,7 @@ dfaLoop:
 		consistent = a.Consistent()
 		if closed == "" && consistent == "" {
 			// TODO: make DFA
-			// TODO: проверяю его с MAT
-			ok, newPrefix := mat.Equal()
+			ok, newPrefix := a.mat.Equivalence()
 			if ok {
 				// TODO: возвращаю автомат
 				break dfaLoop
@@ -174,7 +173,7 @@ func (a *Angluin) findConsistentForRowInTables(
 	for _, prefixes := range equalTableRowToPrefix {
 		for i, prefix1 := range prefixes {
 			for _, prefix2 := range prefixes[i+1:] {
-				for _, letter := range a.oracle.GetAlphabet() {
+				for _, letter := range a.mat.GetAlphabet() {
 					combined1 := getWordWithLetter(prefix1, letter)
 					combined2 := getWordWithLetter(prefix2, letter)
 					if ok, row1, row2 := a.consistentForPair(

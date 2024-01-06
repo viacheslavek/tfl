@@ -23,7 +23,7 @@ func (a *Angluin) AddPrefix(prefix string) {
 }
 
 func (a *Angluin) addExtendPrefix(prefix string) {
-	for _, letter := range a.oracle.GetAlphabet() {
+	for _, letter := range a.mat.GetAlphabet() {
 		newPrefix := prefix + string(letter)
 
 		a.extendPrefix[newPrefix] = struct{}{}
@@ -81,19 +81,19 @@ func createWord(prefix, suffix string) string {
 
 func (a *Angluin) updateTableByPrefix(prefix string) {
 	for s := range a.suffix {
-		a.table[createTableKey(prefix, s)] = a.oracle.BelongLanguage(createWord(prefix, s))
+		a.table[createTableKey(prefix, s)] = a.mat.Membership(createWord(prefix, s))
 	}
 }
 
 func (a *Angluin) updateTableBySuffix(suffix string) {
 	for p := range a.prefix {
-		a.table[createTableKey(p, suffix)] = a.oracle.BelongLanguage(createWord(p, suffix))
+		a.table[createTableKey(p, suffix)] = a.mat.Membership(createWord(p, suffix))
 	}
 }
 
 func (a *Angluin) updateExtendTableByAddPrefix(prefix string) {
 	for s := range a.suffix {
-		a.extendTable[createTableKey(prefix, s)] = a.oracle.BelongLanguage(createWord(prefix, s))
+		a.extendTable[createTableKey(prefix, s)] = a.mat.Membership(createWord(prefix, s))
 	}
 }
 
@@ -105,7 +105,7 @@ func (a *Angluin) updateExtendTableByDeletePrefix(prefix string) {
 
 func (a *Angluin) updateExtendTableBySuffix(suffix string) {
 	for p := range a.extendPrefix {
-		a.extendTable[createTableKey(p, suffix)] = a.oracle.BelongLanguage(createWord(p, suffix))
+		a.extendTable[createTableKey(p, suffix)] = a.mat.Membership(createWord(p, suffix))
 	}
 }
 
