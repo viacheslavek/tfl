@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/VyacheslavIsWorkingNow/tfl/lab3/mat"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
 )
 
@@ -36,15 +37,36 @@ func New(o oracle.Oracle) *Angluin {
 	return &a
 }
 
-// Run TODO: Это делаю уже в последнюю очередь:
-// Запускаю прогон, если таблица консистентна и полна, то кидаю в учителя
-// если все норм, то отдаю автомат, если нет, то c новой строкой повторяю итерацию
 func (a *Angluin) Run() {
-	fmt.Println("in RUN")
+	log.Println("start RUN")
 
-	a.testRun()
+dfaLoop:
+	for {
+		a.PrintPrefix()
+		a.PrintSuffix()
+		a.PrintExtendPrefix()
+		a.PrintTable()
+		a.PrintExtendTable()
+		var closed, consistent string
+		closed = a.Closed()
+		consistent = a.Consistent()
+		if closed == "" && consistent == "" {
+			// TODO: make DFA
+			// TODO: проверяю его с MAT
+			ok, newPrefix := mat.Equal()
+			if ok {
+				// TODO: возвращаю автомат
+				break dfaLoop
+			}
+			a.AddPrefix(newPrefix)
+		} else if closed != "" {
+			a.AddPrefix(closed)
+		} else {
+			a.AddSuffix(consistent)
+		}
+	}
 
-	fmt.Println("end in run")
+	log.Println("finish run")
 }
 
 // Closed INFO: Closed: An observation table is called closed if for all t in S.A there exist an s` in S
