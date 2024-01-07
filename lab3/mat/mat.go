@@ -79,7 +79,8 @@ func (mat *MAT) Equivalence(m *automaton.Machine) (bool, string) {
 
 	for _, word := range mat.words {
 		if m.Membership(word) != mat.Membership(word) {
-			log.Printf("word %s isn't equal", word)
+			log.Printf("word %s isn't equal\n", word)
+			log.Printf("machine: %t | mat %t: \n", m.Membership(word), mat.Membership(word))
 			return false, word
 		}
 	}

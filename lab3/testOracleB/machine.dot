@@ -6,10 +6,10 @@ digraph Automaton {
 	10 [shape="doublecircle"];
 	01 -> 10 [label="a"];
 	01 -> 11 [label="b"];
-	10 -> 01 [label="b"];
 	10 -> 00 [label="a"];
+	10 -> 01 [label="b"];
 	11 -> 10 [label="a"];
 	11 -> 11 [label="b"];
-	00 -> 01 [label="b"];
 	00 -> 00 [label="a"];
+	00 -> 01 [label="b"];
 }

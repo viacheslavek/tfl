@@ -35,6 +35,10 @@ func (m *Machine) Translate(suffix, prefix, extendPrefix map[string]struct{}, ta
 
 	m.setFinalStates(prefixToRow, table)
 
+	log.Println(m.StartState)
+	log.Println(m.Transitions)
+	log.Println(m.FinalStates)
+
 	log.Println("END TRANSLATE")
 }
 
@@ -146,6 +150,9 @@ func (m *Machine) addFinalState(s State) {
 }
 
 func (m *Machine) addTransition(from, to State, letter byte) {
+	if to == "" {
+		return
+	}
 	if _, ok := m.Transitions[from]; ok {
 		m.Transitions[from][letter] = to
 	} else {
