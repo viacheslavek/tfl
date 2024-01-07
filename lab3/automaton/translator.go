@@ -1,7 +1,6 @@
 package automaton
 
 import (
-	"fmt"
 	"log"
 	"sort"
 )
@@ -155,8 +154,17 @@ func (m *Machine) addTransition(from, to State, letter byte) {
 	}
 }
 
-// Membership TODO: доделать функцию - беру слово и прохожусь по состояниям - остановился в финальном - принадлежит языку
 func (m *Machine) Membership(word string) bool {
-	fmt.Println("word:", word)
-	return true
+	currentState := m.StartState
+
+	for _, symbol := range word {
+		nextState, exists := m.Transitions[currentState][byte(symbol)]
+		if !exists {
+			return false
+		}
+		currentState = nextState
+	}
+
+	_, isFinal := m.FinalStates[currentState]
+	return isFinal
 }

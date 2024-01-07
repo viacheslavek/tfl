@@ -2,6 +2,7 @@ package mat
 
 import (
 	"log"
+	"sort"
 
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/automaton"
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/oracle"
@@ -18,13 +19,19 @@ type MAT struct {
 }
 
 func New(o oracle.Oracle, maxLenWords int) *MAT {
-	log.Println("Generating words...")
-	words := generateCombinations(o.GetAlphabet(), maxLenWords)
 	log.Println("Generating words success")
-	return &MAT{
-		oracle: o,
-		words:  words,
+	mat := &MAT{
+		oracle:      o,
+		maxLenWords: maxLenWords,
 	}
+
+	log.Println("Generating words...")
+	mat.words = mat.GenerateWords()
+	sort.Sort(automaton.ByLengthThenAlphabetical(mat.words))
+	log.Println("Generating words success")
+	mat.words = mat.GenerateWords()
+
+	return mat
 }
 
 func (mat *MAT) GenerateWords() []string {
@@ -72,6 +79,7 @@ func (mat *MAT) Equivalence(m *automaton.Machine) (bool, string) {
 
 	for _, word := range mat.words {
 		if m.Membership(word) != mat.Membership(word) {
+			log.Printf("word %s isn't equal", word)
 			return false, word
 		}
 	}
