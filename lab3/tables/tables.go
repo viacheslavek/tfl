@@ -2,7 +2,6 @@ package tables
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -61,16 +60,18 @@ func (a *Angluin) Run() *automaton.Machine {
 			closed = a.Closed()
 			consistent = a.Consistent()
 			if closed == "" && consistent == "" {
-				m := automaton.New()
-				m.Translate(a.suffix, a.prefix, a.table)
+				m := automaton.New(a.mat.GetAlphabet())
+				m.Translate(a.suffix, a.prefix, a.extendPrefix, a.table, a.extendTable)
 				ok, newPrefix := a.mat.Equivalence(m)
 				if ok {
 					return m
 				}
 				a.AddPrefix(newPrefix)
 			} else if closed != "" {
+				log.Println("NOT CLOSED, ADD", closed)
 				a.AddPrefix(closed)
 			} else {
+				log.Println("NOT CONSISTENT, ADD", consistent)
 				a.AddSuffix(consistent)
 			}
 		}
@@ -239,36 +240,4 @@ func findSuffixAndLetterInRow(row1, row2 string, letter byte, suffixList []strin
 	log.Println("This is can not happened. row1 == row2 but row1 != row2")
 
 	return ""
-}
-
-func (a *Angluin) testRun() {
-	// оракул - вторая буква с конца - 'b'
-	// первый этап - пока все пусто
-	a.PrintTable()
-	a.PrintExtendTable()
-	fmt.Printf("first closed? '%s' -> yes?\n", a.Closed())
-	fmt.Printf("second consistent? '%s' -> yes?\n", a.Consistent())
-
-	// второй этап - из МАТа приходит 'ba'
-	a.AddPrefix("ba")
-	a.PrintTable()
-	a.PrintExtendTable()
-	fmt.Println("ex:", a.extendTable)
-
-	fmt.Printf("second closed? '%s' -> yes?\n", a.Closed())
-	fmt.Printf("second consistent? '%s' -> no?\n", a.Consistent())
-
-	// третий этап - приходит суффикс 'а' из-за неконсистентности
-	a.AddSuffix("a")
-	a.PrintTable()
-	a.PrintExtendTable()
-	fmt.Printf("third closed? '%s' -> no?\n", a.Closed())
-	fmt.Printf("second consistent? '%s' -> yes?\n", a.Consistent())
-
-	// четвертый этап - из-за не закрытости приходит 'bb'
-	a.AddPrefix("bb")
-	a.PrintTable()
-	a.PrintExtendTable()
-	fmt.Printf("forth closed? '%s' -> yes?\n", a.Closed())
-	fmt.Printf("second consistent? '%s' -> yes?\n", a.Consistent())
 }

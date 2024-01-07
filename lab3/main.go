@@ -7,30 +7,16 @@ import (
 	"github.com/VyacheslavIsWorkingNow/tfl/lab3/tables"
 )
 
-type handsOracle struct{}
-
-func (ho handsOracle) BelongLanguage(word string) bool {
-	var newAns string
-	fmt.Println(word)
-	fmt.Scan(&newAns)
-	return newAns == "yes"
-}
-
-func (ho handsOracle) GetAlphabet() []byte {
-	return []byte{'a', 'b'}
-}
-
 func main() {
 
 	fmt.Println("START")
 
-	alphabet := []byte{'a', 'b'}
-	firstOracle := oracle.NewRegularOracle("aba*", alphabet)
-	firstOracle.BelongLanguage("ab")
+	// TODO: добавить бинарный оракул и именно с ним будет запускаться main
 
-	ho := handsOracle{}
-	angluin := tables.New(ho, 4)
-	fmt.Printf("simple angluin %+v\n", angluin)
+	alphabet := []byte{'a', 'b'}
+	regOracle := oracle.NewRegularOracle("aba*", alphabet)
+
+	angluin := tables.New(regOracle, 4)
 	angluin.Run()
 
 	fmt.Println("SUCCESS")
