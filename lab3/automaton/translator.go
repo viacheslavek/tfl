@@ -30,11 +30,17 @@ func (m *Machine) Translate(suffix, prefix, extendPrefix map[string]struct{}, ta
 
 	states, prefixToRow, rowToPrefix := m.getStates(suffix, prefix, extendPrefix, table, extendTable)
 
+	m.setStartState(prefixToRow)
+
 	m.setTransitions(states, prefixToRow, rowToPrefix)
 
 	m.setFinalStates(prefixToRow, table)
 
 	log.Println("END TRANSLATE")
+}
+
+func (m *Machine) setStartState(prefixToRow map[string]State) {
+	m.StartState = prefixToRow[""]
 }
 
 func (m *Machine) getStates(
