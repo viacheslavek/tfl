@@ -34,9 +34,9 @@ func TestBinSecondFromEnd(t *testing.T) {
 }
 
 func TestRegular(t *testing.T) {
-	regOracle := oracle.NewRegularOracle("(aba|bb)*a", []byte{'a', 'b'})
+	regOracle := oracle.NewRegularOracle("b(aba|bb)*aa(b|a)a(bb)*(bbb|a)", []byte{'a', 'b'})
 
-	angluin := tables.New(regOracle, 4)
+	angluin := tables.New(regOracle, 18)
 	auto := angluin.Run()
 	err := auto.GetDotMachine("testRegularOracle")
 	if err != nil {
