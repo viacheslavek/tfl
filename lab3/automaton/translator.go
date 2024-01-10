@@ -63,6 +63,8 @@ func (m *Machine) getStates(
 			rowToPrefix[newRow] = p
 			prefixToRow[p] = newRow
 			states[newRow] = struct{}{}
+		} else {
+			prefixToRow[p] = newRow
 		}
 	}
 

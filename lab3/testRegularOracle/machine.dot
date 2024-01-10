@@ -1,0 +1,16 @@
+digraph Automaton {
+	rankdir=LR;
+	-1 -> 0100;
+	-1 [shape="point"];
+	1000 [shape="doublecircle"];
+	0100 -> 1000 [label="a"];
+	0100 -> 0001 [label="b"];
+	1000 -> 0000 [label="a"];
+	1000 -> 0010 [label="b"];
+	0001 -> 0000 [label="a"];
+	0001 -> 0100 [label="b"];
+	0010 -> 0100 [label="a"];
+	0010 -> 0000 [label="b"];
+	0000 -> 0000 [label="a"];
+	0000 -> 0000 [label="b"];
+}

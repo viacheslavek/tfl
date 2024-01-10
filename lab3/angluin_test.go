@@ -34,7 +34,7 @@ func TestBinSecondFromEnd(t *testing.T) {
 }
 
 func TestRegular(t *testing.T) {
-	regOracle := oracle.NewRegularOracle("ab*", []byte{'a', 'b'})
+	regOracle := oracle.NewRegularOracle("(aba|bb)*a", []byte{'a', 'b'})
 
 	angluin := tables.New(regOracle, 4)
 	auto := angluin.Run()
